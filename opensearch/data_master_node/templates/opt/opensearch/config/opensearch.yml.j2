@@ -53,10 +53,5 @@ plugins.security.ssl.http.clientauth_mode: "{{ osearch_ssl_clientauth_mode | def
 
 plugins.security.nodes_dn:
   - CN={{cluster_name}}-*.{{cluster_vars.dns_user_domain}},DC={{cluster_vars.dns_user_domain}}
-{#{%- for node in ansible_play_hosts | sort %}#}
-{#{%- if hostvars[node]['hosttype'] in ['data', 'master'] %}#}
-{#  - CN={{ node }}.{{cluster_vars.dns_user_domain}},DC={{ cluster_vars.dns_user_domain }}#}
-{#{%- endif %}#}
-{#{%- endfor %}#}
 plugins.security.authcz.admin_dn:
   - CN=admin,DC={{cluster_vars.dns_user_domain}}
