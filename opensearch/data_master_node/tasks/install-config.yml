@@ -1,0 +1,98 @@
+---
+
+- name: Create pid, log and conf directories
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{osearch_user}}"
+    group: "{{osearch_group}}"
+    mode: "2755"
+  with_items:
+    - "{{osearch_pid_dir}}"
+    - "{{osearch_log_dir}}"
+    - "{{osearch_conf_dir}}"
+
+
+- name: Set osearch_heap_size to half installed
+  set_fact: osearch_heap_size="{{ (ansible_memtotal_mb / 2) | round | int | abs }}m"
+  when: osearch_heap_size is not defined
+
+
+#Create data directory if mountpoint doesn't exist already
+- name: Create data dir if it doesn't exist
+  become: yes
+  file:
+    path: "{{osearch_data_dir}}"
+    state: directory
+    owner: "{{osearch_user}}"
+    group: "{{osearch_group}}"
+    mode: 0755
+  notify: restart opensearch
+
+- name: Copy Systemd File
+  become: yes
+  template:
+    src: etc/systemd/system/opensearch.service.j2
+    dest: /etc/systemd/system/opensearch.service
+    mode: 0644
+    force: yes
+  notify:
+  - reload systemd configuration
+  - restart opensearch
+
+- name: Copy jvm.options File for Instance
+  become: yes
+  template:
+    src: opt/opensearch/config/jvm.options.j2
+    dest: "{{osearch_conf_dir}}/jvm.options"
+    owner: "{{osearch_user}}"
+    group: "{{osearch_group}}"
+    mode: 0600
+    force: yes
+  notify: restart opensearch
+
+- name: Copy main opensearch config file
+  become: yes
+  template:
+    src: opt/opensearch/config/opensearch.yml.j2
+    dest: "{{osearch_conf_dir}}/opensearch.yml"
+    owner: "{{osearch_user}}"
+    group: "{{osearch_group}}"
+    mode: '0600'
+    force: yes
+  notify: restart opensearch
+
+- name: Copy tmpfiles.d
+  become: yes
+  copy:
+    content: |
+      d    {{ osearch_pid_dir }}   0755 {{ osearch_user }} {{ osearch_group }} - -
+    dest: "/usr/lib/tmpfiles.d/opensearch.conf"
+    owner: "{{osearch_user}}"
+    group: "{{osearch_group}}"
+    mode: 0644
+    force: yes
+  notify: restart opensearch
+
+- name: Copy sysctl.d/opensearch.conf
+  become: yes
+  copy:
+    content: |
+      vm.max_map_count={{ osearch_max_map_count }}
+    dest: "/usr/lib/sysctl.d/opensearch.conf"
+    owner: "{{osearch_user}}"
+    group: "{{osearch_group}}"
+    mode: 0644
+    force: yes
+  notify: restart opensearch
+
+#This needs to be set programmatically, or opensearch will not start.  A reboot will do it, but not ideal.
+- name: set vm.max_map_count
+  become: yes
+  sysctl:
+    name: vm.max_map_count
+    value: "{{osearch_max_map_count}}"
+    sysctl_set: yes
+    state: present
+    reload: yes

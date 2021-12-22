@@ -1,0 +1,57 @@
+---
+
+- name: sslca | CA stuff (localhost only)
+  block:
+    - name: "Create {{ playbook_ca_yaml | dirname }} directory"
+      file: { path: "{{ playbook_ca_yaml | dirname }}", state: directory }
+
+    - name: sslca | Generate CA RSA private key
+      community.crypto.openssl_privatekey_pipe:
+        format: "pkcs8"
+#        size: 2048
+      register: r__openssl_privatekey_pipe
+      no_log: true
+
+    - name: sslca | Generate CA CSR
+      community.crypto.openssl_csr_pipe:
+        privatekey_content: "{{r__openssl_privatekey_pipe.privatekey}}"
+        basic_constraints: ["CA:TRUE", "pathlen:0"]
+        basic_constraints_critical: yes
+        key_usage: ["cRLSign", "digitalSignature", "keyCertSign"]
+        key_usage_critical: yes
+        extended_key_usage: ["clientAuth", "serverAuth"]
+        extended_key_usage_critical : yes
+        subject: { DC: "{{cluster_vars.dns_user_domain}}", CN: "root.ca.{{cluster_vars.dns_user_domain}}", OU: "CA" }
+        use_common_name_for_san: no
+      register: r__openssl_csr_pipe
+
+    - name: sslca | Generate the self-signed CA certificate
+      community.crypto.x509_certificate_pipe:
+        provider: selfsigned
+        privatekey_content: "{{r__openssl_privatekey_pipe.privatekey}}"
+        csr_content: "{{r__openssl_csr_pipe.csr}}"
+        selfsigned_not_after: "+7305d"       # Expiry in 20 years (incl leap years)
+      register: r__x509_certificate_pipe
+
+    - name: sslca | Vault-encrypt the CA privatekey
+      ansible_vault:
+        plaintext: "{{r__openssl_privatekey_pipe.privatekey}}"
+        action: encrypt
+      register: r__ansible_vault_encrypt_ca_privatekey
+
+    - name: "sslca | Create {{ playbook_ca_yaml }}"
+      copy:
+        content: |
+          ssl_ownca:
+            ca-crt.pem: |
+              {{ r__x509_certificate_pipe.certificate | trim | indent(4) }}
+            ca-key.pem: !vault |
+              {{ r__ansible_vault_encrypt_ca_privatekey.vaulttext | trim | indent(4) }}
+        dest: "{{ playbook_ca_yaml }}"
+        force: yes
+  run_once: yes
+  delegate_to: localhost
+  when: ssl_ownca is not defined
+
+- name: "sslca | Reload {{ playbook_ca_yaml }} - for all hosts"
+  include_vars: "{{ playbook_ca_yaml }}"

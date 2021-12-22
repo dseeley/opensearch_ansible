@@ -1,0 +1,71 @@
+---
+
+- name: Check dashboards installed version
+  stat:
+    path: "/opt/dashboards-{{dashboards_version}}-linux-{{ansible_architecture}}"
+  register: this_dashboards_installed
+
+- name: Check any dashboards installed
+  stat:
+    path: "{{dashboards_home}}"
+  register: dashboards_link_stat
+
+#- debug: msg={{this_dashboards_installed.stat}}
+#- debug: msg={{dashboards_link_stat.stat}}
+
+# If it's already installed and latest, do nothing
+# If it's not installed, install
+# If a different version is installed, stop the service and remove the soft link.
+- block:
+    - block:
+        - name: Stop/Disable dashboards
+          service:
+            name: opensearch-dashboards
+            state: stopped
+            enabled: no
+
+        - name: Remove the dashboards link
+          file:
+            path: "{{dashboards_home}}"
+            state: absent
+      when: dashboards_link_stat.stat.exists and dashboards_link_stat.stat.lnk_source == '/opt/opensearch-dashboards-{{dashboards_version}}'
+
+    - name: Get dashboards artifact
+      become: yes
+      get_url:
+        url: "{{dashboards_artifact_location}}/{{dashboards_version}}/opensearch-dashboards-{{dashboards_version}}-linux-{{ 'x64' if ansible_architecture == 'x86_64' else 'arm64' if ansible_architecture == 'aarch64' else ansible_architecture }}.tar.gz"
+        dest: "{{dashboards_unzip_loc}}.tar.gz"
+
+    - name: Extract the dashboards artifact
+      become: yes
+      unarchive:
+        remote_src: true
+        src: "{{dashboards_unzip_loc}}.tar.gz"
+        dest: "/opt"
+      notify: restart opensearch-dashboards
+
+    # 'owner' and 'group' directives in unarchive do not work for tar.gz files
+    - name: Change ownership of the dashboards dir
+      become: yes
+      file:
+        state: directory
+        recurse: true
+        path: "{{dashboards_unzip_loc}}"
+        owner: "{{dashboards_user}}"
+        group: "{{dashboards_group}}"
+      notify: restart opensearch-dashboards
+
+    - name: Create the dashboards link
+      become: yes
+      file:
+        src: "{{dashboards_unzip_loc}}"
+        dest: "{{dashboards_home}}"
+        state: link
+        mode: 0755
+        owner: "{{dashboards_user}}"
+        group: "{{dashboards_group}}"
+      notify: restart opensearch-dashboards
+
+  when: (not this_dashboards_installed.stat.exists) or (not dashboards_link_stat.stat.exists) or (dashboards_link_stat.stat.exists and not dashboards_link_stat.stat.lnk_source == dashboards_unzip_loc)
+  vars:
+    dashboards_unzip_loc: "/opt/opensearch-dashboards-{{dashboards_version}}-linux-{{ 'x64' if ansible_architecture == 'x86_64' else 'arm64' if ansible_architecture == 'aarch64' else ansible_architecture }}"

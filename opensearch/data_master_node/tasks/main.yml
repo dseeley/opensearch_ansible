@@ -1,0 +1,42 @@
+---
+
+- include: hostconfig.yml
+
+- include: install-binary.yml
+
+- include: install-plugins.yml
+
+- include: install-config.yml
+
+- include: certs.yml
+#- include: certs_alt.yml
+
+
+- name: flush the handlers, forcing (re)start
+  meta: flush_handlers
+
+- name: wait for opensearch port 9200 to be open
+  wait_for: host=localhost port=9200 timeout=60
+
+
+- include: users.yml
+
+
+- name: Apply opensearch templates
+  become: yes
+  become_user: "{{osearch_user}}"
+  uri:
+    url: "https://localhost:9200/_template/{{item['name']}}"
+    method: PUT
+    status_code: 200
+    user: "admin"
+    password: "{{osearch_internal_users['admin']['_password']}}"
+    force_basic_auth: yes
+    body_format: json
+    body: "{{ item['content'] }}"
+    client_cert: "{{osearch_ssl_certificate if osearch_ssl_clientauth_mode in ['REQUIRE', 'OPTIONAL'] else omit}}"
+    client_key: "{{osearch_ssl_key if osearch_ssl_clientauth_mode in ['REQUIRE', 'OPTIONAL'] else omit}}"
+    validate_certs: no
+  with_items: "{{ osearch_mapping_templates }}"
+  run_once: yes
+  when: osearch_mapping_templates is defined

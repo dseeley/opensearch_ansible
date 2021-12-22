@@ -1,0 +1,84 @@
+---
+
+- name: Create initial internal_users.yml
+  become: yes
+  copy:
+    content: |+
+      ---
+      # This is the internal user database
+      # The hash value is a bcrypt hash and can be generated with plugin/tools/hash.sh
+      
+      _meta:
+        type: "internalusers"
+        config_version: 2
+
+    dest: "{{osearch_home}}/plugins/opensearch-security/securityconfig/internal_users.yml"
+    owner: "{{osearch_user}}"
+    group: "{{osearch_group}}"
+    mode: 0644
+  run_once: yes
+
+- name: Check blowfish (bcrypt) is installed.  If not, install 'passlib' and 'bcrypt'
+  assert: { that: "'0' | password_hash('blowfish') | length>10", fail_msg: "blowfish (bcrypt) is not installed.  Please install 'passlib' and 'bcrypt'", success_msg: "blowfish installed" }
+
+- name: Add internal users
+  become: yes
+  become_user: "{{osearch_user}}"
+  blockinfile:
+    block: |+2
+      {{item.key}}:
+        hash: {{ item.value['_password'] | password_hash('blowfish') }}
+        reserved: {{ item.value['reserved'] }}
+      {% if item.value['backend_roles'] is defined %}
+        backend_roles: {{ item.value['backend_roles'] }}
+      {% endif %}
+      {% if item.value['description'] is defined %}
+        description: {{ item.value['description'] }}
+      {% endif %}
+    dest: "{{osearch_home}}/plugins/opensearch-security/securityconfig/internal_users.yml"
+    insertafter: EOF
+    marker: "## {mark} opensearch {{item.key}} configuration ##"
+  with_dict: "{{osearch_internal_users}}"
+  run_once: yes
+
+- block:
+    - name: "Make {{osearch_securityadmin_sh}} executable"
+      file: dest={{osearch_securityadmin_sh}} mode=u+x
+
+    - name: Security Plugin configuration | Initialize the opensearch security index in opensearch
+      shell: >
+        {{osearch_securityadmin_sh}}
+        -cacert {{ osearch_ssl_certificate_authority }} -cert {{osearch_admin_certificate}} -key {{osearch_admin_key}}
+        -cn {{cluster_name}}
+        -f {{osearch_home}}/plugins/opensearch-security/securityconfig/internal_users.yml
+        -nhnv
+      environment:
+        JAVA_HOME: "{{osearch_home}}/jdk"
+      run_once: true
+  become: yes
+  become_user: "{{osearch_user}}"
+  vars:
+    osearch_securityadmin_sh: "{{osearch_home}}/plugins/opensearch-security/tools/securityadmin.sh"
+
+
+- name: Add opensearch users
+  become: yes
+  become_user: "{{osearch_user}}"
+  uri:
+    url: "https://localhost:9200/_plugins/_security/api/internalusers/{{item.key}}"
+    method: PUT
+    body_format: json
+    body:
+      password: "{{item.value['password']}}"
+      opendistro_security_roles: "{{item.value['opendistro_security_roles'] | default(omit)}}"
+      backend_roles: "{{item.value['backend_roles'] | default(omit)}}"
+    client_cert: "{{osearch_ssl_certificate if osearch_ssl_clientauth_mode in ['REQUIRE', 'OPTIONAL'] else omit}}"
+    client_key: "{{osearch_ssl_key if osearch_ssl_clientauth_mode in ['REQUIRE', 'OPTIONAL'] else omit}}"
+    status_code: [200, 201, 202, 204]
+    user: "admin"
+    password: "{{osearch_internal_users['admin']['_password']}}"
+    force_basic_auth: yes
+    validate_certs: no
+  run_once: yes
+  with_dict: "{{osearch_users}}"
+

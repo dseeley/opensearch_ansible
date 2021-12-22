@@ -1,0 +1,63 @@
+[Unit]
+Description=opensearch-{{ansible_hostname}}
+Documentation=http://www.opensearch.co
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+RuntimeDirectory=opensearch
+Environment=osearch_HOME={{osearch_home}}
+Environment=osearch_PATH_CONF={{osearch_conf_dir}}
+Environment=PID_DIR={{osearch_pid_dir}}
+
+WorkingDirectory={{osearch_home}}
+
+User={{osearch_user}}
+Group={{osearch_group}}
+
+ExecStart={{osearch_home}}/bin/opensearch -p ${PID_DIR}/opensearch.pid --quiet
+
+# StandardOutput is configured to redirect to journalctl since
+# some error messages may be logged in standard output before
+# opensearch logging system is initialized. opensearch
+# stores its logs in /var/log/opensearch and does not use
+# journalctl by default. If you also want to enable journalctl
+# logging, you can simply remove the "quiet" option from ExecStart.
+StandardOutput=journal
+StandardError=inherit
+
+# Specifies the maximum file descriptor number that can be opened by this process
+{% if osearch_max_open_files is defined %}
+LimitNOFILE={{osearch_max_open_files}}
+{% endif %}
+
+# Specifies the maximum number of processes
+LimitNPROC=4096
+
+# Specifies the maximum size of virtual memory
+LimitAS=infinity
+
+# Specifies the maximum file size
+LimitFSIZE=infinity
+
+# Specifies the maximum number of bytes of memory that may be locked into RAM
+# Set to "infinity" if you use the 'bootstrap.memory_lock: true' option
+# in opensearch.yml and 'MAX_LOCKED_MEMORY=unlimited' in instance_default_file
+{% if osearch_extra_config['bootstrap.memory_lock'] is defined and osearch_extra_config['bootstrap.memory_lock'] == True %}
+LimitMEMLOCK=infinity
+{% endif %}
+
+# Disable timeout logic and wait until process is stopped
+TimeoutStopSec=0
+
+# SIGTERM signal is used to stop the Java process
+KillSignal=SIGTERM
+
+# Java process is never killed
+SendSIGKILL=no
+
+# When a JVM receives a SIGTERM signal it exits with code 143
+SuccessExitStatus=143
+
+[Install]
+WantedBy=multi-user.target

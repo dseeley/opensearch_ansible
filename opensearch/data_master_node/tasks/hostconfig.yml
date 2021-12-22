@@ -1,0 +1,75 @@
+---
+
+#- name: hostconfig | write out hosts to /etc/hosts when no DNS in use
+#  become: yes
+#  blockinfile:
+#    dest: "/etc/hosts"
+#    block: "{{ hostvars | json_query(\"*.join(' ', [ansible_default_ipv4.address, ansible_hostname])\") | sort | join('\n') }}"
+#    state: present
+#    create: yes
+#    marker: "# Ansible inventory hosts {mark}"
+#  when: (cluster_vars.dns_server is not defined  or  cluster_vars.dns_server == '')  or  (cluster_vars.dns_user_domain is not defined  or  cluster_vars.dns_user_domain == "")
+
+- name: hostconfig | swap disabling
+  block:
+    - name: hostconfig | Disable swap for current session
+      become: yes
+      command: swapoff -a
+
+    - name: hostconfig | Remove swapfile from /etc/fstab
+      become: yes
+      mount:
+        name: "{{ item }}"
+        fstype: swap
+        state: absent
+      with_items: ["swap", "none"]
+
+    - name: hostconfig | Set kernel swappiness to 0
+      become: yes
+      sysctl:
+        name: vm.swappiness
+        value: 0
+        sysctl_set: yes
+        state: present
+        reload: yes
+
+- name: hostconfig | set unlimited memlock ulimit
+  become: yes
+  pam_limits:
+    domain: "{{osearch_user}}"
+    limit_type: '-'
+    limit_item: memlock
+    value: unlimited
+    comment: "unlimited memory lock for {{osearch_user}}"
+  when: osearch_extra_config['bootstrap.memory_lock'] is defined  and  osearch_extra_config['bootstrap.memory_lock'] | bool
+
+- name: hostconfig | set nofile ulimit
+  become: yes
+  pam_limits:
+    domain: "{{osearch_user}}"
+    limit_type: '-'
+    limit_item: nofile
+    value: "{{osearch_max_open_files}}"
+    comment: "{{osearch_max_open_files}} for {{osearch_user}}"
+  when: osearch_max_open_files is defined
+
+- name: hostconfig | Create opensearch unix group
+  become: yes
+  group:
+    name: "{{osearch_group}}"
+
+- name: hostconfig | Add the opensearch user
+  become: yes
+  user:
+    name: "{{osearch_user}}"
+    groups: "{{osearch_group}}"
+    system: yes
+
+- name: "hostconfig | Change {{osearch_data_dir}} data directory ownership "
+  become: yes
+  file:
+    path: "{{osearch_data_dir}}"
+    name: "{{osearch_user}}"
+    group: "{{osearch_group}}"
+    mode: 0755
+    state: directory

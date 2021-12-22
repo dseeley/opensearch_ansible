@@ -1,0 +1,10 @@
+inventory_*
+*.retry
+.vscode*
+.idea*
+.DS_Store
+venv
+*.pyc
+Pipfile.lock
+/gcp__*.json
+id_rsa*

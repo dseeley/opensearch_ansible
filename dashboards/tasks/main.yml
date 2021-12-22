@@ -1,0 +1,20 @@
+---
+
+- name: hostconfig | Create dashboards unix group
+  become: yes
+  group:
+    name: "{{dashboards_group}}"
+
+- name: hostconfig | Add the dashboards user
+  become: yes
+  user:
+    name: "{{dashboards_user}}"
+    groups: "{{dashboards_group}}"
+    system: yes
+
+
+- include: install-binary.yml
+
+- include: install-config.yml
+
+- include: certs.yml

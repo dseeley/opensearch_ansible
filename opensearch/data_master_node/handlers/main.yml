@@ -1,0 +1,36 @@
+---
+
+# Need to do this when we manually add systemd service files to the filesystem
+- name: reload systemd configuration
+  become: yes
+  systemd:
+    daemon_reload: yes
+  throttle: 1
+
+#- name: restart opensearch
+#  become: yes
+#  service:
+#    name: opensearch
+#    state: stopped
+#  changed_when: true
+#  notify: truncate the logfile
+#
+#- name: truncate the logfile
+#  become: yes
+#  become_user: "{{osearch_user}}"
+#  shell: "/usr/bin/truncate -s0 {{osearch_log_dir}}/{{cluster_name}}.log"
+#  changed_when: true
+#  notify: restart opensearch service
+#
+#- name: restart opensearch service
+- name: restart opensearch
+  become: yes
+  service:
+    name: opensearch
+    state: restarted
+    enabled: yes
+  register: opensearch_service_status
+  until: opensearch_service_status.status.ActiveState == "active"
+  retries: 30
+  delay: 5
+  throttle: 1

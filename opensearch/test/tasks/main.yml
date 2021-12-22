@@ -1,0 +1,28 @@
+---
+
+- name: Ensure the health status is green for all nodes in the cluster
+  become: yes
+  become_user: "{{osearch_user}}"
+  uri:
+    url: "https://localhost:9200/_cluster/health"
+    user: "admin"
+    password: "{{osearch_internal_users['admin']['_password']}}"
+    force_basic_auth: yes
+    client_cert: "{{osearch_ssl_certificate if osearch_ssl_clientauth_mode in ['REQUIRE', 'OPTIONAL'] else omit}}"
+    client_key: "{{osearch_ssl_key if osearch_ssl_clientauth_mode in ['REQUIRE', 'OPTIONAL'] else omit}}"
+    method: GET
+    validate_certs: no
+  register: osearch_health
+  any_errors_fatal: true
+  until: >
+    osearch_health.json is defined and
+    osearch_health.json.status=='green' and
+    osearch_health.json.initializing_shards==0 and
+    osearch_health.json.number_of_data_nodes==cluster_hosts_state | json_query('[?tagslabels.hosttype==`data`]') | length and
+    osearch_health.json.relocating_shards==0 and
+    osearch_health.json.unassigned_shards==0 and
+    osearch_health.json.delayed_unassigned_shards==0
+  retries: 1000
+  run_once: true
+
+- debug: msg={{osearch_health}}

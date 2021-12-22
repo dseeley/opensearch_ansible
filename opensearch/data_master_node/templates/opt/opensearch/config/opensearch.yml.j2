@@ -1,0 +1,62 @@
+#jinja2: trim_blocks:False
+{{ ansible_managed | comment }}
+
+cluster.name: {{ cluster_name }}
+
+node.name: {{inventory_hostname}}
+
+node.attr.zone: {{ hostvars[inventory_hostname]['regionzone'] }}
+
+path.data: {{ osearch_data_dir }}
+
+path.logs: {{ osearch_log_dir }}
+
+network.host: {{ osearch_network_host }}
+
+node.data: {% if 'data' in group_names %}true{% else %}false{% endif %}
+node.ingest: {% if 'data' in group_names %}true{% else %}false{% endif %}
+
+{%- if cluster_vars[buildenv].hosttype_vars['master'] is undefined %}
+node.master: true
+{%- else %}
+node.master: {% if 'master' in group_names -%}true{%- else -%}false{% endif %}
+{%- endif %}
+
+{%- if osearch_extra_config %}
+{{ osearch_extra_config | to_nice_yaml }}
+{%- endif %}
+
+cluster.initial_master_nodes: {{ osearch_master_nodes }}
+
+discovery.seed_hosts: {{ osearch_unicast_nodes }}
+
+{#plugins.security.disabled: false#}
+{#plugins.security.advanced_modules_enabled: true#}
+
+plugins.security.allow_default_init_securityindex: true
+plugins.security.audit.type: internal_opensearch
+plugins.security.enable_snapshot_restore_privilege: true
+plugins.security.check_snapshot_restore_write_privileges: true
+plugins.security.restapi.roles_enabled: ["all_access", "security_rest_api_access"]
+
+plugins.security.ssl.transport.pemkey_filepath: "{{ osearch_ssl_key | basename }}"
+plugins.security.ssl.transport.pemcert_filepath: "{{ osearch_ssl_certificate | basename }}"
+plugins.security.ssl.transport.pemtrustedcas_filepath: "{{ osearch_ssl_certificate_authority | basename }}"
+plugins.security.ssl.transport.enforce_hostname_verification: false
+plugins.security.ssl.transport.resolve_hostname: false
+
+plugins.security.ssl.http.enabled: true
+plugins.security.ssl.http.pemkey_filepath: "{{ osearch_ssl_key | basename }}"
+plugins.security.ssl.http.pemcert_filepath: "{{ osearch_ssl_certificate | basename }}"
+plugins.security.ssl.http.pemtrustedcas_filepath: "{{ osearch_ssl_certificate_authority | basename }}"
+plugins.security.ssl.http.clientauth_mode: "{{ osearch_ssl_clientauth_mode | default('')}}"
+
+plugins.security.nodes_dn:
+  - CN={{cluster_name}}-*.{{cluster_vars.dns_user_domain}},DC={{cluster_vars.dns_user_domain}}
+{#{%- for node in ansible_play_hosts | sort %}#}
+{#{%- if hostvars[node]['hosttype'] in ['data', 'master'] %}#}
+{#  - CN={{ node }}.{{cluster_vars.dns_user_domain}},DC={{ cluster_vars.dns_user_domain }}#}
+{#{%- endif %}#}
+{#{%- endfor %}#}
+plugins.security.authcz.admin_dn:
+  - CN=admin,DC={{cluster_vars.dns_user_domain}}

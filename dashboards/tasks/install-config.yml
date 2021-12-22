@@ -1,0 +1,48 @@
+---
+
+- name: Create pid, log and conf directories
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{dashboards_user}}"
+    group: "{{dashboards_group}}"
+    mode: "2755"
+  with_items:
+    - "{{dashboards_pid_dir}}"
+    - "{{dashboards_log_dir}}"
+    - "{{dashboards_conf_dir}}"
+
+- name: Copy Systemd File
+  become: yes
+  template:
+    src: etc/systemd/system/opensearch-dashboards.service.j2
+    dest: /etc/systemd/system/opensearch-dashboards.service
+    mode: 0644
+    force: yes
+  notify:
+  - reload systemd configuration
+  - restart opensearch-dashboards
+
+- name: Copy main dashboards config file
+  become: yes
+  template:
+    src: opt/opensearch-dashboards/config/opensearch_dashboards.yml.j2
+    dest: "{{dashboards_conf_dir}}/opensearch_dashboards.yml"
+    owner: "{{dashboards_user}}"
+    group: "{{dashboards_group}}"
+    mode: '0644'
+    force: yes
+  notify: restart opensearch-dashboards
+
+- name: Copy tmpfiles.d
+  become: yes
+  copy:
+    content: |
+      d    {{ dashboards_pid_dir }}   0755 {{ dashboards_user }} {{ dashboards_group }} - -
+    dest: "/usr/lib/tmpfiles.d/opensearch-dashboards.conf"
+    owner: "{{dashboards_user}}"
+    group: "{{dashboards_group}}"
+    mode: 0644
+    force: yes
+  notify: restart opensearch-dashboards

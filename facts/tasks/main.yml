@@ -1,0 +1,23 @@
+---
+
+- name: Get opensearch hosts when DNS in use
+  block:
+    - name: Get all master/data nodes
+      set_fact:
+        osearch_unicast_nodes: "[{% for node in ansible_play_hosts | sort %}{% if hostvars[node]['hosttype'] in ['data', 'master'] %}'{{ node }}.{{cluster_vars.dns_user_domain}}'{{',' if not loop.last else ''}}{% endif %}{% endfor %}]"
+
+    - name: Get master(-equivalent) opensearch hosts
+      set_fact:
+        osearch_master_nodes: "{{ (groups['master'] if groups['master'] is defined else groups['data']) | map('regex_replace', '^(.*)$', '\\1.' + cluster_vars.dns_user_domain) | sort }}"
+  when: (cluster_vars.dns_server is defined and cluster_vars.dns_server != "")
+
+- name: Get opensearch hosts when DNS not in use
+  block:
+    - name: Get all master/data nodes when not using DNS
+      set_fact:
+        osearch_unicast_nodes: "[{% for node in ansible_play_hosts | sort %}{% if hostvars[node]['hosttype'] in ['data', 'master'] %}'{{ hostvars[node]['ansible_host'] }}'{{',' if not loop.last else ''}}{% endif %}{% endfor %}]"
+
+    - name: Get master(-equivalent) opensearch hosts
+      set_fact:
+        osearch_master_nodes: "{{ (groups['master'] if groups['master'] is defined else groups['data']) | map('extract', hostvars, 'ansible_host') | sort }}"
+  when: (cluster_vars.dns_server is not defined  or  cluster_vars.dns_server == "")

@@ -1,0 +1,47 @@
+---
+
+#List currently installed plugins - ignore xpack if > v 2.0
+- name: Check installed opensearch plugins
+  become: yes
+  become_user: "{{osearch_user}}"
+  shell: "{{osearch_home}}/bin/opensearch-plugin list | grep -vE 'x-pack'"
+  register: installed_plugins
+  failed_when: "'ERROR' in installed_plugins.stdout"
+  changed_when: False
+  ignore_errors: yes
+  environment:
+    CONF_DIR: "{{ osearch_conf_dir }}"
+
+## This removes any currently installed plugins (to prevent errors when reinstalling)
+#- name: Remove opensearch plugins
+#  become: yes
+#  become_user: "{{osearch_user}}"
+#  command: "{{osearch_home}}/bin/opensearch-plugin remove {{item}} --silent"
+#  ignore_errors: yes
+#  with_items: "{{ installed_plugins.stdout_lines | default([]) }}"
+#  when: installed_plugins.stdout_lines | length > 0 and not 'No plugin detected' in installed_plugins.stdout_lines[0]
+#  notify: restart opensearch
+#  register: plugin_removed
+#  environment:
+#    CONF_DIR: "{{ osearch_conf_dir }}"
+
+- name: Install opensearch plugins
+  become: yes
+  become_user: "{{osearch_user}}"
+  command: "{{osearch_home}}/bin/opensearch-plugin install {{ item.plugin }} --batch --silent {% if item.proxy_host is defined and item.proxy_host != '' and item.proxy_port is defined and item.proxy_port != ''%} -DproxyHost={{ item.proxy_host }} -DproxyPort={{ item.proxy_port }} {% elif osearch_proxy_host is defined and osearch_proxy_host != '' %} -DproxyHost={{ osearch_proxy_host }} -DproxyPort={{ osearch_proxy_port }} {% endif %}"
+  register: plugin_installed
+  failed_when: "'ERROR' in plugin_installed.stdout"
+  changed_when: plugin_installed.rc == 0
+  with_items: "{{ osearch_plugins | default([]) }}"
+  when: not osearch_plugins is none
+  notify: restart opensearch
+  environment:
+    CONF_DIR: "{{ osearch_conf_dir }}"
+  until: plugin_installed.rc == 0
+  retries: 5
+  delay: 5
+
+#Set permissions on plugins directory
+- name: Set Plugin Directory Permissions
+  become: yes
+  file: state=directory path={{ osearch_home }}/plugins owner={{ osearch_user }} group={{ osearch_group }} recurse=yes

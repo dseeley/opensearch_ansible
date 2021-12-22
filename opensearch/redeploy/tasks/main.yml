@@ -1,0 +1,12 @@
+---
+
+- name: Stop opensearch service
+  become: yes
+  service:
+    name: opensearch
+    state: stopped
+  delegate_to: "{{hosts_to_remove}}"
+  register: opensearch_service_status
+  until: opensearch_service_status.status.ActiveState == "inactive"
+  retries: 30
+  delay: 5

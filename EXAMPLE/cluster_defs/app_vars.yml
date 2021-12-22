@@ -1,0 +1,102 @@
+---
+
+playbook_ca_yaml: "{{playbook_dir}}/cluster_defs/{{ cloud_type }}/{{ clusterid }}/{{ region }}/{{ buildenv }}/_ssl/ownca.yml"
+
+#"https://artifacts.opensearch.org/releases/bundle/opensearch/1.2.2/opensearch-1.2.2-linux-x64.tar.gz"
+osearch_artifact_location: "https://artifacts.opensearch.org/releases/bundle/opensearch"
+osearch_version: "1.2.2"
+osearch_user: opensearch
+osearch_group: opensearch
+osearch_home: "/opt/opensearch"
+osearch_pid_dir: "/var/run/opensearch"
+osearch_log_dir: "/var/log/opensearch"
+osearch_data_dir: "/opensearch"
+osearch_conf_dir: "{{osearch_home}}/config"
+osearch_max_open_files: 65536
+osearch_max_map_count: 262144
+osearch_extra_config: {
+  bootstrap.memory_lock: true,
+  action.destructive_requires_name: true,
+  thread_pool.search.queue_size: 10000,
+  cluster.routing.allocation.disk.threshold_enabled: false,
+  cluster.routing.allocation.awareness.attributes: "zone",
+  http.cors.enabled: true,
+  http.cors.allow-origin: "*"
+}
+osearch_index_codec: best_compression
+osearch_index_number_of_shards: 6
+osearch_index_number_of_replicas: 1
+osearch_refresh_interval: "30s"
+osearch_network_host: 0.0.0.0
+#osearch_plugins:
+#  - plugin: mapper-size
+#  - plugin: ingest-geoip
+
+osearch_ssl_certificate_path: "{{ osearch_conf_dir }}"
+
+osearch_ssl_certificate_authority: "{{osearch_ssl_certificate_path}}/ca-crt.pem"
+osearch_ssl_certificate: "{{osearch_ssl_certificate_path}}/opensearch-crt.pem"
+osearch_ssl_key: "{{osearch_ssl_certificate_path}}/opensearch-key.pem"
+osearch_admin_certificate: "{{osearch_ssl_certificate_path}}/admin-crt.pem"
+osearch_admin_key: "{{osearch_ssl_certificate_path}}/admin-key.pem"
+osearch_ssl_clientauth_mode: "OPTIONAL"      # Whether we require clients to user certificates to authenticate.  "REQUIRE", "OPTIONAL" or "NONE"
+
+osearch_internal_users:
+  admin:
+    _password: !vault |
+      $ANSIBLE_VAULT;1.1;AES256
+      7669080460651349243347331538721104778691266429457726036813912140404310
+    reserved: true
+    backend_roles: ["admin"]
+    description: "admin user"
+
+  kibanaserver:
+    _password: !vault |
+      $ANSIBLE_VAULT;1.1;AES256
+      7669080460651349243347331538721104778691266429457726036813912140404310
+    reserved: true
+    description: "kibanaserver user"
+
+osearch_users:
+  dougal:
+    password: !vault |
+      $ANSIBLE_VAULT;1.1;AES256
+      7669080460651349243347331538721104778691266429457726036813912140404310
+    opendistro_security_roles: ["all_access"]
+    attributes: {"name": "Dougal Seeley"}
+
+
+osearch_mapping_templates:
+  - name: default
+    content: {
+      "index_patterns": ["*"],
+      "order": 0,
+      "settings": {
+        "index.codec": "{{osearch_index_codec}}",
+        "index.number_of_shards": "{{osearch_index_number_of_shards}}",
+        "index.number_of_replicas": "{{osearch_index_number_of_replicas}}",
+        "index.refresh_interval": "{{osearch_refresh_interval}}",
+        "index.mapping.ignore_malformed": true,
+        "index.mapping.coerce": true,
+        "index.mapping.total_fields.limit": 1500,
+        "index.auto_expand_replicas": false
+      },
+      version: 1
+    }
+
+# https://artifacts.opensearch.org/releases/bundle/opensearch-dashboards/1.2.0/opensearch-dashboards-1.2.0-linux-x64.tar.gz
+dashboards_artifact_location: "https://artifacts.opensearch.org/releases/bundle/opensearch-dashboards"
+dashboards_version: "1.2.0"
+dashboards_user: dashboards
+dashboards_group: dashboards
+dashboards_home: "/opt/opensearch-dashboards"
+dashboards_pid_dir: "/var/run/dashboards"
+dashboards_log_dir: "/var/log/dashboards"
+dashboards_conf_dir: "{{dashboards_home}}/config"
+dashboards_network_host: 0.0.0.0
+
+dashboards_ssl_is_self_signed: true
+dashboards_ssl_certificate_path: "{{ dashboards_conf_dir }}/certs"
+dashboards_ssl_certificate_authority: "{{dashboards_ssl_certificate_path}}/ca-crt.pem"
+dashboards_ssl_certificate: "{{dashboards_ssl_certificate_path}}/dashboards-crt.pem"
+dashboards_ssl_key: "{{dashboards_ssl_certificate_path}}/dashboards-key.pem"

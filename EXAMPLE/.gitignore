@@ -1,0 +1,13 @@
+inventory_*
+*.retry
+.vscode*
+.idea*
+.DS_Store
+venv
+*.pyc
+Pipfile.lock
+roles/clusterverse
+/gcp__*.json
+id_rsa*
+/cluster_defs/**/_ssl/*
+/test*.yml

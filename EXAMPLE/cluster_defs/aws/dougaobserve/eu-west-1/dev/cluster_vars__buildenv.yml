@@ -1,0 +1,49 @@
+---
+
+cluster_vars:
+  dev:
+    aws_access_key: !vault |
+      $ANSIBLE_VAULT;1.1;AES256
+      7669080460651349243347331538721104778691266429457726036813912140404310
+    aws_secret_key: !vault |
+      $ANSIBLE_VAULT;1.1;AES256
+      7669080460651349243347331538721104778691266429457726036813912140404310
+    ssh_connection_cfg:
+      host: &host_ssh_connection_cfg
+        ansible_user: "ansible"
+        ansible_ssh_private_key_file: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          7669080460651349243347331538721104778691266429457726036813912140404310
+#      bastion:
+#        ssh_args: '-o ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ./id_rsa_bastion -W %h:%p -q user@192.168.0.1"'
+#        ssh_priv_key: !vault |
+#          $ANSIBLE_VAULT;1.2;AES256;dev
+#          7669080460651349243347331538721104778691266429457726036813912140404310
+    vpc_name: "{{buildenv}}"
+    vpc_subnet_name_prefix: "{{buildenv}}-public-{{region}}"
+    key_name: "aws_ansible__id_rsa"
+    termination_protection: "no"
+#    nsupdate_cfg: {server: "", key_name: "", key_secret: ""}      # If you're using bind9 (or other nsupdate-compatible 'dns_server')
+
+    hosttype_vars:
+      data:
+        auto_volumes:
+          - { device_name: "/dev/sda1", mountpoint: "/", fstype: "ext4", volume_type: "gp3", volume_size: 8, encrypted: True, delete_on_termination: true }
+          - { device_name: "/dev/sdf", mountpoint: "{{osearch_data_dir}}", fstype: "ext4", volume_type: "gp3", volume_size: 5, encrypted: True, delete_on_termination: true }
+        flavor: t3a.small
+        version: "{{osearch_version | regex_replace('\\.', '_') | default('')}}"
+        vms_by_az: { a: 1, b: 1, c: 1 }
+
+#      master:
+#        auto_volumes: []
+#        flavor: t3a.small
+#        version: "{{osearch_version | regex_replace('\\.', '_') | default('')}}"
+#        vms_by_az: { a: 1, b: 1, c: 1 }
+
+      dashboards:
+        auto_volumes: []
+        flavor: t3a.small
+        version: "{{dashboards_version | regex_replace('\\.', '_') | default('')}}"
+        vms_by_az: { a: 1, b: 0, c: 0 }
+
+_host_ssh_connection_cfg: { <<: *host_ssh_connection_cfg }

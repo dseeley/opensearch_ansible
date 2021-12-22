@@ -1,0 +1,21 @@
+---
+
+# Need to do this when we manually add systemd service files to the filesystem
+- name: reload systemd configuration
+  become: yes
+  systemd:
+    daemon_reload: yes
+  throttle: 1
+
+# Restart dashboards and ensure it is enabled
+- name: restart opensearch-dashboards
+  become: yes
+  service:
+    name: opensearch-dashboards
+    state: restarted
+    enabled: yes
+  register: dashboards_service_status
+  until: dashboards_service_status.status.ActiveState == "active"
+  retries: 30
+  delay: 5
+  throttle: 1

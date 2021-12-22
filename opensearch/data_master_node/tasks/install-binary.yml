@@ -1,0 +1,78 @@
+---
+
+##This is no good - if it's already running, this starts up another instance to get the version, which may OOM.
+#- name: Check if opensearch is installed
+#  shell: "{{osearch_home}}/bin/opensearch --version | grep \"Version: {{osearch_version}}\""
+#  failed_when: osearch_install_check.rc > 1
+#  changed_when: no
+#  register: osearch_install_check
+
+- name: Check opensearch installed version
+  stat:
+    path: "/opt/opensearch-{{osearch_version}}"
+  register: this_osearch_installed
+
+- name: Check any opensearch installed
+  stat:
+    path: "{{osearch_home}}"
+  register: osearch_link_stat
+
+#- debug: msg={{this_osearch_installed.stat}}
+#- debug: msg={{osearch_link_stat.stat}}
+
+# If it's already installed and latest, do nothing
+# If it's not installed, install
+# If a different version is installed, stop the service and remove the soft link.
+- block:
+    - block:
+        - name: Stop/Disable opensearch
+          service:
+            name: opensearch
+            state: stopped
+            enabled: no
+
+        - name: Remove the opensearch link
+          file:
+            path: "{{osearch_home}}"
+            state: absent
+      when: osearch_link_stat.stat.exists and osearch_link_stat.stat.lnk_source == '{{osearch_unzip_loc}}'
+
+    - name: Get opensearch artifact
+      become: yes
+      get_url:
+        url: "{{osearch_artifact_location}}/{{osearch_version}}/opensearch-{{osearch_version}}-linux-{{ 'x64' if ansible_architecture == 'x86_64' else 'arm64' if ansible_architecture == 'aarch64' else ansible_architecture }}.tar.gz"
+        dest: "{{osearch_unzip_loc}}.tar.gz"
+
+    - name: Extract the opensearch artifact
+      become: yes
+      unarchive:
+        remote_src: true
+        src: "{{osearch_unzip_loc}}.tar.gz"
+        dest: /opt
+      notify: restart opensearch
+
+    # 'owner' and 'group' directives in unarchive do not work for tar.gz files
+    - name: Change ownership of the opensearch dir
+      become: yes
+      file:
+        state: directory
+        recurse: true
+        path: "{{osearch_unzip_loc}}"
+        owner: "{{osearch_user}}"
+        group: "{{osearch_group}}"
+      notify: restart opensearch
+
+    - name: Create the opensearch link
+      become: yes
+      file:
+        src: "{{osearch_unzip_loc}}"
+        dest: "{{osearch_home}}"
+        state: link
+        mode: 0755
+        owner: "{{osearch_user}}"
+        group: "{{osearch_group}}"
+      notify: restart opensearch
+
+  when: (not this_osearch_installed.stat.exists) or (not osearch_link_stat.stat.exists) or (osearch_link_stat.stat.exists and not osearch_link_stat.stat.lnk_source == osearch_unzip_loc)
+  vars:
+    osearch_unzip_loc: "/opt/opensearch-{{osearch_version}}"
