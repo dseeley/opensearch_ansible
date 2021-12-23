@@ -8,8 +8,8 @@
     user: "admin"
     password: "{{osearch_internal_users['admin']['_password']}}"
     force_basic_auth: yes
-    client_cert: "{{osearch_ssl_certificate if osearch_ssl_clientauth_mode in ['REQUIRE', 'OPTIONAL'] else omit}}"
-    client_key: "{{osearch_ssl_key if osearch_ssl_clientauth_mode in ['REQUIRE', 'OPTIONAL'] else omit}}"
+    client_cert: "{{osearch_ssl_crt_path if osearch_ssl_clientauth_mode in ['REQUIRE', 'OPTIONAL'] else omit}}"
+    client_key: "{{osearch_ssl_key_path if osearch_ssl_clientauth_mode in ['REQUIRE', 'OPTIONAL'] else omit}}"
     method: GET
     validate_certs: no
   register: osearch_health

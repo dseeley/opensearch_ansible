@@ -8,6 +8,3 @@ merge_dict_vars_list:
   - "./cluster_defs/{{ cloud_type }}/{{ clusterid }}/{{ region }}/"
   - "./cluster_defs/{{ cloud_type }}/{{ clusterid }}/{{ region }}/{{ buildenv }}/"
   - "./cluster_defs/{{ cloud_type }}/{{ clusterid }}/{{ region }}/{{ buildenv }}/_ssl/ownca.yml"
-
-#merge_dict_vars_list:
-#  - "./cluster_defs/{{ clusterid }}/"

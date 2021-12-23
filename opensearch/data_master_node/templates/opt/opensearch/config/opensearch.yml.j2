@@ -39,16 +39,16 @@ plugins.security.enable_snapshot_restore_privilege: true
 plugins.security.check_snapshot_restore_write_privileges: true
 plugins.security.restapi.roles_enabled: ["all_access", "security_rest_api_access"]
 
-plugins.security.ssl.transport.pemkey_filepath: "{{ osearch_ssl_key | basename }}"
-plugins.security.ssl.transport.pemcert_filepath: "{{ osearch_ssl_certificate | basename }}"
-plugins.security.ssl.transport.pemtrustedcas_filepath: "{{ osearch_ssl_certificate_authority | basename }}"
-plugins.security.ssl.transport.enforce_hostname_verification: false
+plugins.security.ssl.transport.pemkey_filepath: "{{ osearch_ssl_key_path | basename }}"
+plugins.security.ssl.transport.pemcert_filepath: "{{ osearch_ssl_crt_path | basename }}"
+plugins.security.ssl.transport.pemtrustedcas_filepath: "{{ osearch_ssl_ca_path | basename }}"
+plugins.security.ssl.transport.enforce_hostname_verification: true
 plugins.security.ssl.transport.resolve_hostname: false
 
 plugins.security.ssl.http.enabled: true
-plugins.security.ssl.http.pemkey_filepath: "{{ osearch_ssl_key | basename }}"
-plugins.security.ssl.http.pemcert_filepath: "{{ osearch_ssl_certificate | basename }}"
-plugins.security.ssl.http.pemtrustedcas_filepath: "{{ osearch_ssl_certificate_authority | basename }}"
+plugins.security.ssl.http.pemkey_filepath: "{{ osearch_ssl_key_path | basename }}"
+plugins.security.ssl.http.pemcert_filepath: "{{ osearch_ssl_crt_path | basename }}"
+plugins.security.ssl.http.pemtrustedcas_filepath: "{{ osearch_ssl_ca_path | basename }}"
 plugins.security.ssl.http.clientauth_mode: "{{ osearch_ssl_clientauth_mode | default('')}}"
 
 plugins.security.nodes_dn:

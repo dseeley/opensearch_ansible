@@ -8,7 +8,6 @@
     - name: sslca | Generate CA RSA private key
       community.crypto.openssl_privatekey_pipe:
         format: "pkcs8"
-#        size: 2048
       register: r__openssl_privatekey_pipe
       no_log: true
 

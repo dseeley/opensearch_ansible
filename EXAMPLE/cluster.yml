@@ -31,23 +31,23 @@
   tasks:
     - { include_role: { name: "clusterverse/_dependencies", apply: { tags: ["always"] } }, tags: ["always"], when: "'clusterverse_config' not in ansible_run_tags" }      # If we --skip-tags=clusterverse_config, this will ensure the variables from /cluster_defs are loaded.
     - { include_role: { name: "clusterverse/cluster_hosts", apply: { tags: ["always"] } }, tags: ["always"], when: "'clusterverse_create' not in ansible_run_tags" }      # If we --skip-tags=clusterverse_create, this will ensure cluster_suffix is defined.
-    - { include_role: { name: "opensearch/ssl_ownca", apply: { tags: ["elastic_ssl_ownca"] } }, tags: ["elastic_ssl_ownca"] }
+    - { include_role: { name: "opensearch/ssl_ownca", apply: { tags: ["opensearch_ssl_ownca"] } }, tags: ["opensearch_ssl_ownca"] }
 
 - name: opensearch | opensearch
   hosts: data:master
   tasks:
-    - { include_role: { name: "opensearch/opensearch/data_master_node", apply: { tags: ["elastic_opensearch"]} }, tags: ["elastic_opensearch"] }
+    - { include_role: { name: "opensearch/opensearch/data_master_node", apply: { tags: ["opensearch_opensearch"]} }, tags: ["opensearch_opensearch"] }
 
 - name: opensearch | opensearch test
   hosts: data[0]
   gather_facts: false
   tasks:
-    - { include_role: { name: "opensearch/opensearch/test", apply: { tags: ["elastic_test"]} }, tags: ["elastic_test"] }
+    - { include_role: { name: "opensearch/opensearch/test", apply: { tags: ["opensearch_test"]} }, tags: ["opensearch_test"] }
 
 - name: opensearch | dashboards
   hosts: dashboards
   tasks:
-    - { include_role: { name: "opensearch/dashboards", apply: { tags: ["elastic_dashboards"]} }, tags: ["elastic_dashboards"] }
+    - { include_role: { name: "opensearch/dashboards", apply: { tags: ["opensearch_dashboards"]} }, tags: ["opensearch_dashboards"] }
 ######
 
 

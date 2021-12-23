@@ -1,6 +1,6 @@
 ---
 
-redeploy_schemosearch_supported: ['_scheme_addallnew_rmdisk_rollback', '_scheme_addnewvm_rmdisk_rollback', '_scheme_rmvm_rmdisk_only', '_scheme_rmvm_keepdisk_rollback']
+redeploy_schemes_supported: ['_scheme_addallnew_rmdisk_rollback', '_scheme_addnewvm_rmdisk_rollback', '_scheme_rmvm_rmdisk_only', '_scheme_rmvm_keepdisk_rollback']
 
 #redeploy_scheme: _scheme_addallnew_rmdisk_rollback
 #redeploy_scheme: _scheme_addnewvm_rmdisk_rollback

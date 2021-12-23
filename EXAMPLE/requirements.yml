@@ -6,5 +6,5 @@ roles:
     version: master
 
   - name: opensearch
-    src: https://github.com/dseeley/elastic_ansible
+    src: https://github.com/dseeley/opensearch_ansible
     version: master

@@ -48,7 +48,7 @@
     - name: Security Plugin configuration | Initialize the opensearch security index in opensearch
       shell: >
         {{osearch_securityadmin_sh}}
-        -cacert {{ osearch_ssl_certificate_authority }} -cert {{osearch_admin_certificate}} -key {{osearch_admin_key}}
+        -cacert {{ osearch_ssl_ca_path }} -cert {{osearch_admin_certificate}} -key {{osearch_admin_key}}
         -cn {{cluster_name}}
         -f {{osearch_home}}/plugins/opensearch-security/securityconfig/internal_users.yml
         -nhnv
@@ -72,8 +72,8 @@
       password: "{{item.value['password']}}"
       opendistro_security_roles: "{{item.value['opendistro_security_roles'] | default(omit)}}"
       backend_roles: "{{item.value['backend_roles'] | default(omit)}}"
-    client_cert: "{{osearch_ssl_certificate if osearch_ssl_clientauth_mode in ['REQUIRE', 'OPTIONAL'] else omit}}"
-    client_key: "{{osearch_ssl_key if osearch_ssl_clientauth_mode in ['REQUIRE', 'OPTIONAL'] else omit}}"
+    client_cert: "{{osearch_ssl_crt_path if osearch_ssl_clientauth_mode in ['REQUIRE', 'OPTIONAL'] else omit}}"
+    client_key: "{{osearch_ssl_key_path if osearch_ssl_clientauth_mode in ['REQUIRE', 'OPTIONAL'] else omit}}"
     status_code: [200, 201, 202, 204]
     user: "admin"
     password: "{{osearch_internal_users['admin']['_password']}}"
