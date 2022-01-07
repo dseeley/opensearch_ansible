@@ -30,19 +30,22 @@ cluster_vars:
         auto_volumes:
           - { device_name: "/dev/sda1", mountpoint: "/", fstype: "ext4", volume_type: "gp3", volume_size: 8, encrypted: True, delete_on_termination: true }
           - { device_name: "/dev/sdf", mountpoint: "{{osearch_data_dir}}", fstype: "ext4", volume_type: "gp3", volume_size: 5, encrypted: True, delete_on_termination: true }
-        flavor: t3a.small
+        flavor: t4g.medium
+        version: "{{osearch_version | regex_replace('\\.', '_') | default('')}}"
+        vms_by_az: { a: 1, b: 1, c: 0 }
+
+      master:
+        auto_volumes:
+          - { device_name: "/dev/sda1", mountpoint: "/", fstype: "ext4", volume_type: "gp3", volume_size: 8, encrypted: True, delete_on_termination: true }
+          - { device_name: "/dev/sdf", mountpoint: "{{osearch_data_dir}}", fstype: "ext4", volume_type: "gp3", volume_size: 2, encrypted: True, delete_on_termination: true }
+        flavor: t4g.small
         version: "{{osearch_version | regex_replace('\\.', '_') | default('')}}"
         vms_by_az: { a: 1, b: 1, c: 1 }
 
-#      master:
-#        auto_volumes: []
-#        flavor: t3a.small
-#        version: "{{osearch_version | regex_replace('\\.', '_') | default('')}}"
-#        vms_by_az: { a: 1, b: 1, c: 1 }
-
       dashboards:
-        auto_volumes: []
-        flavor: t3a.small
+        auto_volumes:
+          - { device_name: "/dev/sda1", mountpoint: "/", fstype: "ext4", volume_type: "gp3", volume_size: 8, encrypted: True, delete_on_termination: true }
+        flavor: t4g.small
         version: "{{dashboards_version | regex_replace('\\.', '_') | default('')}}"
         vms_by_az: { a: 1, b: 0, c: 0 }
 

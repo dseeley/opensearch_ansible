@@ -1,8 +1,7 @@
 ---
 
-- name: Ensure the health status is green for all nodes in the cluster
+- name: opensearch/test | Ensure the health status is green for all nodes in the cluster
   become: yes
-  become_user: "{{osearch_user}}"
   uri:
     url: "https://localhost:9200/_cluster/health"
     user: "admin"
@@ -12,17 +11,19 @@
     client_key: "{{osearch_ssl_key_path if osearch_ssl_clientauth_mode in ['REQUIRE', 'OPTIONAL'] else omit}}"
     method: GET
     validate_certs: no
-  register: osearch_health
+  register: r__uri__cluster_health
   any_errors_fatal: true
   until: >
-    osearch_health.json is defined and
-    osearch_health.json.status=='green' and
-    osearch_health.json.initializing_shards==0 and
-    osearch_health.json.number_of_data_nodes==cluster_hosts_state | json_query('[?tagslabels.hosttype==`data`]') | length and
-    osearch_health.json.relocating_shards==0 and
-    osearch_health.json.unassigned_shards==0 and
-    osearch_health.json.delayed_unassigned_shards==0
+    r__uri__cluster_health.json is defined and
+    r__uri__cluster_health.json.status=='green' and
+    r__uri__cluster_health.json.initializing_shards==0 and
+    r__uri__cluster_health.json.number_of_data_nodes==groups['data'] | length and
+    r__uri__cluster_health.json.relocating_shards==0 and
+    r__uri__cluster_health.json.unassigned_shards==0 and
+    r__uri__cluster_health.json.delayed_unassigned_shards==0
   retries: 1000
   run_once: true
 
-- debug: msg={{osearch_health}}
+- name: opensearch/test | r__uri__cluster_health
+  debug: msg={{r__uri__cluster_health}}
+  run_once: true

@@ -7,15 +7,22 @@
     daemon_reload: yes
   throttle: 1
 
-# Restart dashboards and ensure it is enabled
+## Restart dashboards nodes.  If this is not the initial install, do each in-turn, ensuring each node is *really* back up (i.e. port 5601 is open) before restarting the next.
+## This is an ugly way to do it, but it seems there is no alternative: 'throttle' applied to a block will apply throttle to each element of the block, so it will restart the service one-by-one, then wait for port 9200 one-by-one, which means the entire cluster will be down.  Also, 'throttle' cannot be applied to include/import_tasks.
 - name: restart opensearch-dashboards
   become: yes
-  service:
-    name: opensearch-dashboards
-    state: restarted
-    enabled: yes
-  register: dashboards_service_status
-  until: dashboards_service_status.status.ActiveState == "active"
-  retries: 30
-  delay: 5
-  throttle: 1
+  action:
+    module: '{{ item.module }}'
+  args: '{{ item.args }}'
+  loop:
+    - module: service
+      args:
+        name: opensearch-dashboards
+        state: restarted
+        enabled: yes
+    - module: wait_for
+      args:
+        host: localhost
+        port: 5601
+        timeout: 300
+  throttle: "{{'1' if dashboards_link_stat.stat.exists else '0'}}"

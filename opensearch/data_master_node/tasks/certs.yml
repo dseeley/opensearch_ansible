@@ -1,13 +1,14 @@
 ---
-- name: certs | admin cert
+
+- name: opensearch/certs | admin cert
   block:
-    - name: certs/admin | Generate RSA private key
+    - name: opensearch/certs/admin | Generate RSA private key
       community.crypto.openssl_privatekey_pipe:
         format: "pkcs8"
       register: r__openssl_privatekey_pipe__admin
       no_log: true
 
-    - name: certs/admin | Generate CSR
+    - name: opensearch/certs/admin | Generate CSR
       community.crypto.openssl_csr_pipe:
         privatekey_content: "{{r__openssl_privatekey_pipe__admin.privatekey}}"
         key_usage: ["digitalSignature", "keyEncipherment", "nonRepudiation"]
@@ -18,7 +19,7 @@
         use_common_name_for_san: no
       register: r__openssl_csr_pipe__admin
 
-    - name: certs/admin | Generate the self-signed certificate
+    - name: opensearch/certs/admin | Generate the self-signed certificate
       community.crypto.x509_certificate_pipe:
         provider: ownca
         ownca_content: "{{ssl_ownca['ca-crt.pem']}}"
@@ -29,15 +30,15 @@
   run_once: yes
   delegate_to: localhost
 
-- name: certs | host certs
+- name: opensearch/certs | host certs
   block:
-    - name: certs/host | Generate RSA private key
+    - name: opensearch/certs/host | Generate RSA private key
       community.crypto.openssl_privatekey_pipe:
         format: "pkcs8"
       register: r__openssl_privatekey_pipe
       no_log: true
 
-    - name: certs/host | Generate CSR
+    - name: opensearch/certs/host | Generate CSR
       community.crypto.openssl_csr_pipe:
         privatekey_content: "{{r__openssl_privatekey_pipe.privatekey}}"
         key_usage: ["digitalSignature", "keyEncipherment", "nonRepudiation"]
@@ -46,15 +47,17 @@
         extended_key_usage_critical: yes
         subject_ordered: [ { DC: "{{cluster_vars.dns_user_domain}}" }, { CN: "{{ansible_hostname}}.{{cluster_vars.dns_user_domain}}" } ]    #NOTE: Order is important for comparison with plugins.security.nodes_dn definition in opensearch.yml (it is reversed).  If this is out of order, you get "Illegal parameter in http or transport request found" in the logs, and no inter-node connection.
         subject_alt_name: |-
-          {% set SANs = [] %}
-          {% set _ = SANs.extend(['DNS:' + ansible_hostname,'DNS:' + ansible_hostname + '.' + cluster_vars.dns_user_domain]) -%}
-          {% if (cluster_vars.dns_server is not defined  or  cluster_vars.dns_server == "") %}
-          {% set _ = SANs.append('IP:' + ansible_host) %}
-          {%- endif %}
+          {%- set SANs = ['DNS:' + ansible_hostname,'IP:' + ansible_default_ipv4.address] -%}
+          {%- if (cluster_vars.dns_user_domain is defined  and  cluster_vars.dns_user_domain != "") -%}
+            {%- set _ = SANs.append('DNS:' + ansible_hostname + '.' + cluster_vars.dns_user_domain) -%}
+          {%- endif -%}
+          {%- if (ansible_default_ipv4.address != ansible_host) -%}
+            {%- set _ = SANs.append('IP:' + ansible_host) -%}
+          {%- endif -%}
           {{ SANs }}
       register: r__openssl_csr_pipe
 
-    - name: certs/host | Generate the self-signed certificate
+    - name: opensearch/certs/host | Generate the self-signed certificate
       community.crypto.x509_certificate_pipe:
         provider: ownca
         ownca_content: "{{ssl_ownca['ca-crt.pem']}}"
@@ -66,19 +69,19 @@
 #    - name: r__x509_certificate_pipe
 #      debug: msg={{r__x509_certificate_pipe}}
 
-- name: certs | copy certs to remote
+- name: opensearch/certs | copy certs to remote
   block:
-    - name: certs | create cert directory on remote
+    - name: opensearch/certs | create cert directory on remote
       file: path={{osearch_ssl_path}} state=directory owner={{osearch_user}} group={{osearch_group}}
 
-    - name: certs | Copy SSL certificates to remote
+    - name: opensearch/certs | Copy SSL certificates to remote
       copy:
         content: "{{ item.val }}"
         dest: "{{ item.path }}"
         mode: "{{ item.mode }}"
         owner: "{{ osearch_user }}"
         group: "{{ osearch_group }}"
-        force: no               # Only create these if they don't already exist
+        force: "{{ 'yes' if recreate_certs is defined and recreate_certs|bool else 'no' }}"
       no_log: true
       with_items:
         - { path: '{{osearch_ssl_ca_path}}', val: "{{ssl_ownca['ca-crt.pem']}}", mode: '0600' }

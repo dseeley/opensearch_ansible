@@ -42,7 +42,7 @@
   hosts: data[0]
   gather_facts: false
   tasks:
-    - { include_role: { name: "opensearch/opensearch/test", apply: { tags: ["opensearch_test"]} }, tags: ["opensearch_test"] }
+    - { include_role: { name: "opensearch/opensearch/test", apply: { tags: ["opensearch_opensearch_test"]} }, tags: ["opensearch_opensearch_test"] }
 
 - name: opensearch | dashboards
   hosts: dashboards

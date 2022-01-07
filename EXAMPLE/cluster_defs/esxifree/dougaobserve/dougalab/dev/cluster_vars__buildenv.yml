@@ -24,12 +24,13 @@ cluster_vars:
         networks: [ &data_NET1 { networkName: "VM Network", virtualDev: vmxnet3 } ]
         vms_by_az: { a: 1, b: 1, c: 0 }
 
-#      master:
-#        auto_volumes: []
-#        flavor: { num_cpus: "2", memory_mb: "2048" }
-#        version: "{{osearch_version | regex_replace('\\.', '_') | default('')}}"
-#        networks: [ &master_NET1 { networkName: "VM Network", virtualDev: vmxnet3 } ]
-#        vms_by_az: { a: 1, b: 1, c: 0 }
+      master:
+        auto_volumes:
+          - { mountpoint: "{{osearch_data_dir}}", volume_size: 2, provisioning_type: "thin", fstype: "ext4" }
+        flavor: { num_cpus: "2", memory_mb: "2048" }
+        version: "{{osearch_version | regex_replace('\\.', '_') | default('')}}"
+        networks: [ &master_NET1 { networkName: "VM Network", virtualDev: vmxnet3 } ]
+        vms_by_az: { a: 1, b: 1, c: 1 }
 
       dashboards:
         auto_volumes: []

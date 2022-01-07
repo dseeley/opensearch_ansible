@@ -1,24 +1,27 @@
 ---
 
-- include: hostconfig.yml
+- include_tasks:
+    file: hostconfig.yml
 
-- include: install-binary.yml
+- include_tasks:
+    file: install-binary.yml
 
-- include: install-plugins.yml
+- include_tasks:
+    file: install-plugins.yml
 
-- include: install-config.yml
+- include_tasks:
+    file: install-config.yml
 
-- include: certs.yml
+- include_tasks:
+    file: certs.yml
 
 
-- name: flush the handlers, forcing (re)start
+- name: flush the handlers, (re)starting opensearch, if necessary
   meta: flush_handlers
 
-- name: wait for opensearch port 9200 to be open
-  wait_for: host=localhost port=9200 timeout=120
 
-
-- include: users.yml
+- include_tasks:
+    file: users.yml
 
 
 - name: Apply opensearch templates

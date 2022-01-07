@@ -13,8 +13,8 @@
     system: yes
 
 
-- include: install-binary.yml
+- include_tasks: install-binary.yml
 
-- include: install-config.yml
+- include_tasks: install-config.yml
 
-- include: certs.yml
+- include_tasks: certs.yml

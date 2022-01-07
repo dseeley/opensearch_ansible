@@ -1,17 +1,17 @@
 ---
 
-- name: sslca | CA stuff (localhost only)
+- name: ssl_ownca | CA stuff (localhost only)
   block:
     - name: "Create {{ playbook_ca_yaml | dirname }} directory"
       file: { path: "{{ playbook_ca_yaml | dirname }}", state: directory }
 
-    - name: sslca | Generate CA RSA private key
+    - name: ssl_ownca | Generate CA RSA private key
       community.crypto.openssl_privatekey_pipe:
         format: "pkcs8"
       register: r__openssl_privatekey_pipe
       no_log: true
 
-    - name: sslca | Generate CA CSR
+    - name: ssl_ownca | Generate CA CSR
       community.crypto.openssl_csr_pipe:
         privatekey_content: "{{r__openssl_privatekey_pipe.privatekey}}"
         basic_constraints: ["CA:TRUE", "pathlen:0"]
@@ -24,7 +24,7 @@
         use_common_name_for_san: no
       register: r__openssl_csr_pipe
 
-    - name: sslca | Generate the self-signed CA certificate
+    - name: ssl_ownca | Generate the self-signed CA certificate
       community.crypto.x509_certificate_pipe:
         provider: selfsigned
         privatekey_content: "{{r__openssl_privatekey_pipe.privatekey}}"
@@ -32,13 +32,13 @@
         selfsigned_not_after: "+7305d"       # Expiry in 20 years (incl leap years)
       register: r__x509_certificate_pipe
 
-    - name: sslca | Vault-encrypt the CA privatekey
+    - name: ssl_ownca | Vault-encrypt the CA privatekey
       ansible_vault:
         plaintext: "{{r__openssl_privatekey_pipe.privatekey}}"
         action: encrypt
       register: r__ansible_vault_encrypt_ca_privatekey
 
-    - name: "sslca | Create {{ playbook_ca_yaml }}"
+    - name: "ssl_ownca | Create {{ playbook_ca_yaml }}"
       copy:
         content: |
           ssl_ownca:
@@ -52,5 +52,5 @@
   delegate_to: localhost
   when: ssl_ownca is not defined
 
-- name: "sslca | Reload {{ playbook_ca_yaml }} - for all hosts"
+- name: "ssl_ownca | Reload {{ playbook_ca_yaml }} - for all hosts"
   include_vars: "{{ playbook_ca_yaml }}"

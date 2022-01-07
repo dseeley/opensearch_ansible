@@ -1,0 +1,22 @@
+---
+
+- name: opensearch/redeploy_predelete | hosts_to_remove
+  debug: msg="{{hosts_to_remove | default([])}}"
+
+- set_fact:
+    hosts_to_remove_opensearch: "{{hosts_to_remove | json_query(\"[?contains(['data','master'], tagslabels.hosttype)]\")}}"
+
+- set_fact:
+    hosts_to_remove_dashboards: "{{hosts_to_remove | json_query(\"[?contains(['dashboards'], tagslabels.hosttype)]\")}}"
+
+- name: opensearch/redeploy_predelete | delegate data/master nodes to opensearch predelete function
+  include_role:
+    name: opensearch/opensearch/redeploy_predelete
+  vars:
+    hosts_to_remove: "{{hosts_to_remove_opensearch}}"       # NOTE: Not possible to put the json_query in here - issue with recursive loops on variables, but not facts.
+
+- name: opensearch/redeploy_predelete | delegate dashboards nodes to dashboards predelete function
+  include_role:
+    name: opensearch/dashboards/redeploy_predelete
+  vars:
+    hosts_to_remove: "{{hosts_to_remove_dashboards}}"       # NOTE: Not possible to put the json_query in here - issue with recursive loops on variables, but not facts.

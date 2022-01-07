@@ -1,13 +1,13 @@
 [Unit]
 Description=opensearch-{{ansible_hostname}}
-Documentation=http://www.opensearch.co
+Documentation=https://opensearch.org
 Wants=network-online.target
 After=network-online.target
 
 [Service]
 RuntimeDirectory=opensearch
-Environment=osearch_HOME={{osearch_home}}
-Environment=osearch_PATH_CONF={{osearch_conf_dir}}
+Environment=OSEARCH_HOME={{osearch_home}}
+Environment=OSEARCH_PATH_CONF={{osearch_conf_dir}}
 Environment=PID_DIR={{osearch_pid_dir}}
 
 WorkingDirectory={{osearch_home}}

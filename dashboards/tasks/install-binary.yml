@@ -1,12 +1,12 @@
 ---
 
 - block:
-    - name: Check dashboards installed version
+    - name: dashboards/install-binary | Check dashboards installed version
       stat:
         path: "{{dashboards_unzip_loc}}"
       register: this_dashboards_installed
 
-    - name: Check any dashboards installed
+    - name: dashboards/install-binary | Check any dashboards installed
       stat:
         path: "{{dashboards_home}}"
       register: dashboards_link_stat
@@ -19,34 +19,36 @@
     # If a different version is installed, stop the service and remove the soft link.
     - block:
         - block:
-            - name: Stop/Disable dashboards
+            - name: dashboards/install-binary | Stop/Disable dashboards
               service:
                 name: opensearch-dashboards
                 state: stopped
                 enabled: no
 
-            - name: Remove the dashboards link
+            - name: dashboards/install-binary | Remove the dashboards link
               file:
                 path: "{{dashboards_home}}"
                 state: absent
           when: dashboards_link_stat.stat.exists and dashboards_link_stat.stat.lnk_source == '/opt/opensearch-dashboards-{{dashboards_version}}'
 
-        - name: Get dashboards artifact
+        - name: dashboards/install-binary | Get dashboards artifact
           become: yes
           get_url:
-            url: "{{dashboards_artifact_location}}/{{dashboards_version}}/opensearch-dashboards-{{dashboards_version}}-linux-{{ 'x64' if ansible_architecture == 'x86_64' else 'arm64' if ansible_architecture == 'aarch64' else ansible_architecture }}.tar.gz"
-            dest: "{{dashboards_unzip_loc}}.tar.gz"
+            url: "{{dashboards_artifact_location}}"
+            dest: "/opt/{{ dashboards_artifact_location|basename }}"
+          when: use_local_artifact is not defined  or  use_local_artifact|bool==false
 
-        - name: Extract the dashboards artifact
+        - name: dashboards/install-binary | Extract the dashboards artifact
           become: yes
           unarchive:
-            remote_src: true
-            src: "{{dashboards_unzip_loc}}.tar.gz"
+            remote_src: "{{ 'yes' if (use_local_artifact is not defined  or  use_local_artifact|bool==false) else 'no' }}"
+            src: "{{ '/opt/' if (use_local_artifact is not defined  or  use_local_artifact|bool==false) else '' }}{{dashboards_artifact_location | basename}}"
             dest: "/opt"
+            creates: "{{dashboards_unzip_loc}}"
           notify: restart opensearch-dashboards
 
         # 'owner' and 'group' directives in unarchive do not work for tar.gz files
-        - name: Change ownership of the dashboards dir
+        - name: dashboards/install-binary | Change ownership of the dashboards dir
           become: yes
           file:
             state: directory
@@ -56,7 +58,7 @@
             group: "{{dashboards_group}}"
           notify: restart opensearch-dashboards
 
-        - name: Create the dashboards link
+        - name: dashboards/install-binary | Create the dashboards link
           become: yes
           file:
             src: "{{dashboards_unzip_loc}}"
@@ -68,4 +70,4 @@
           notify: restart opensearch-dashboards
       when: (not this_dashboards_installed.stat.exists) or (not dashboards_link_stat.stat.exists) or (dashboards_link_stat.stat.exists and not dashboards_link_stat.stat.lnk_source == dashboards_unzip_loc)
   vars:
-    dashboards_unzip_loc: "/opt/opensearch-dashboards-{{dashboards_version}}-linux-{{ 'x64' if ansible_architecture == 'x86_64' else 'arm64' if ansible_architecture == 'aarch64' else ansible_architecture }}"
+    dashboards_unzip_loc: "/opt/{{ dashboards_artifact_location|basename | regex_replace('(.*?)\\.tar\\.gz', '\\1') }}"

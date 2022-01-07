@@ -1,0 +1,64 @@
+---
+
+- name: dashboards/redeploy_predelete | hosts_to_remove
+  debug: msg="{{hosts_to_remove | default('')}}"
+
+- name: update service_facts
+  service_facts:
+  delegate_to: "{{item.name}}"
+  delegate_facts: yes
+  loop: "{{hosts_to_remove}}"
+
+- name: dashboards/redeploy_predelete | Stop service
+  become: yes
+  service:
+    name: opensearch-dashboards
+    state: stopped
+  delegate_to: "{{item.name}}"
+  loop: "{{hosts_to_remove}}"
+  when: "'opensearch-dashboards.service' in hostvars[item.name]['services']"
+
+
+- name: dashboards/redeploy_predelete | reconfigure opensearch_dashboards.yml - needs to have opensearch.hosts set to the new hosts (excluding the hosts_to_remove)
+  block:
+    - name: dashboards/redeploy_predelete | set master_eligible_nodes to only the nodes we're keeping
+      set_fact:
+        master_eligible_nodes: "{{ master_eligible_nodes | json_query(\"[?!contains(\" + hosts_to_remove_opensearch|map(attribute='name')|to_yaml|quote + \", hostname)]\") }}"
+
+    - name: dashboards/redeploy_predelete | master_eligible_nodes
+      debug: msg={{master_eligible_nodes}}
+
+    - name: dashboards/redeploy_predelete | Get (network) facts to determine the local IP/network
+      setup: { gather_subset: ["network"] }
+      delegate_to: "{{item}}"
+      delegate_facts: yes
+      loop: "{{ master_eligible_nodes | map(attribute='hostname') }}"
+
+    - debug:
+        msg: "{{ (master_eligible_nodes | map(attribute='hostname')) | map('extract', hostvars, 'ansible_default_ipv4') | map(attribute='address') }}"
+      delegate_to: "{{item}}"
+      loop: "{{ dashboard_nodes_to_keep }}"
+
+    - name: dashboards/redeploy_predelete | Copy main config file
+      template:
+        src: "{{playbook_dir}}/roles/opensearch/dashboards/templates/opt/opensearch-dashboards/config/opensearch_dashboards.yml.j2"
+        dest: "{{dashboards_conf_dir}}/opensearch_dashboards.yml"
+        owner: "{{dashboards_user}}"
+        group: "{{dashboards_group}}"
+        mode: '0644'
+        force: yes
+      delegate_to: "{{item}}"
+      loop: "{{ dashboard_nodes_to_keep }}"
+
+    - name: dashboards/redeploy_predelete | restart dashboards
+      service:
+        name: opensearch-dashboards
+        state: restarted
+      delegate_to: "{{item}}"
+      loop: "{{ dashboard_nodes_to_keep }}"
+
+    - name: dashboards/redeploy_predelete | re-include main opensearch/facts to reset facts (master_eligible_nodes) to default
+      include_role: { name: "opensearch/facts" }
+  become: yes
+  vars:
+    dashboard_nodes_to_keep: "{{ groups['dashboards'] | difference(hosts_to_remove|map(attribute='name')) |list }}"

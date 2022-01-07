@@ -5,33 +5,40 @@ cluster.name: {{ cluster_name }}
 
 node.name: {{inventory_hostname}}
 
-node.attr.zone: {{ hostvars[inventory_hostname]['regionzone'] }}
-
 path.data: {{ osearch_data_dir }}
 
 path.logs: {{ osearch_log_dir }}
 
-network.host: {{ osearch_network_host }}
+network.bind_host: {{ osearch_network_bind_host }}
+network.publish_host: _site_
 
-node.data: {% if 'data' in group_names %}true{% else %}false{% endif %}
-node.ingest: {% if 'data' in group_names %}true{% else %}false{% endif %}
-
-{%- if cluster_vars[buildenv].hosttype_vars['master'] is undefined %}
-node.master: true
-{%- else %}
-node.master: {% if 'master' in group_names -%}true{%- else -%}false{% endif %}
+node.roles:
+{%- if 'data' in group_names %}
+  - data
+{%- endif %}
+{%- if inventory_hostname in (master_eligible_nodes | map(attribute='hostname')) %}
+  - master
 {%- endif %}
 
-{%- if osearch_extra_config %}
+{% if osearch_extra_config %}
 {{ osearch_extra_config | to_nice_yaml }}
+{% endif %}
+
+{%- if osearch_extra_config['cluster.routing.allocation.awareness.attributes'] is defined and osearch_extra_config['cluster.routing.allocation.awareness.attributes'] == 'zone' %}
+node.attr.zone: {{ hostvars[inventory_hostname]['regionzone'] }}
+{% endif %}
+
+{%- if inventory_hostname == master_eligible_nodes[0]['hostname'] -%}
+# (https://www.elastic.co/guide/en/elasticsearch/reference/current/modules-discovery-bootstrap-cluster.html#modules-discovery-bootstrap-cluster)
+# Technically this doesn't have to be set to all master-eligible nodes on all such nodes, if we don't mind the cluster being fault-intolerant during startup, and it's a pain to manage because it should be removed after cluster setup, and never added again.
+cluster.initial_master_nodes: {{ inventory_hostname }}
 {%- endif %}
 
-cluster.initial_master_nodes: {{ osearch_master_nodes }}
+#Instead of defining discovery.seed_hosts statically here, set via a file ($OSEARCH_PATH_CONF/unicast_hosts.txt), which is automatically reloaded when changed (avoiding restarting opensearch each time).
+discovery.seed_providers: file
 
-discovery.seed_hosts: {{ osearch_unicast_nodes }}
-
-{#plugins.security.disabled: false#}
-{#plugins.security.advanced_modules_enabled: true#}
+## Prevent the "split brain" by configuring the majority of nodes (total number of master-eligible nodes / 2 + 1):
+#discovery.zen.minimum_master_nodes:
 
 plugins.security.allow_default_init_securityindex: true
 plugins.security.audit.type: internal_opensearch
