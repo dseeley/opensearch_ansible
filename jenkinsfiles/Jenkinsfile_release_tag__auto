@@ -1,0 +1,7 @@
+#!groovy
+
+node {
+    stage('Call opensearch_ansible/opensearch_ansible-release-tag') {
+        build job: 'opensearch_ansible/opensearch_ansible-release-tag', parameters: [string(name: 'NEW_VERSION', value: "next")]
+    }
+}

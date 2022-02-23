@@ -33,7 +33,7 @@
       register: r__x509_certificate_pipe
 
     - name: ssl_ownca | Vault-encrypt the CA privatekey
-      ansible_vault:
+      ansible_vault_pipe:
         plaintext: "{{r__openssl_privatekey_pipe.privatekey}}"
         action: encrypt
       register: r__ansible_vault_encrypt_ca_privatekey
