@@ -23,7 +23,7 @@ osearch_extra_config: {
   http.cors.allow-origin: "*"
 }
 osearch_index_codec: best_compression
-osearch_index_number_of_shards: 6
+osearch_index_number_of_shards: "{{ (cluster_hosts_target | length) - 1 }}"
 osearch_index_number_of_replicas: 1
 osearch_refresh_interval: "30s"
 osearch_network_bind_host: 0.0.0.0
