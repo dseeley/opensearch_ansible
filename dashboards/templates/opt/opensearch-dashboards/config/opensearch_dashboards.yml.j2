@@ -2,7 +2,7 @@
 {{ ansible_managed | comment }}
 
 # dashboards is served by a back end server. This setting specifies the port to use.
-#server.port: 5601
+server.port: "{{dashboards_port | default(5601)}}"
 
 # Specifies the address to which the dashboards server will bind. IP addresses and host names are both valid values.
 # The default is 'localhost', which usually means remote machines will not be able to connect.
@@ -32,7 +32,7 @@ server.maxPayloadBytes: 5242880
 server.name: "{{inventory_hostname}}"
 
 # The URLs of the opensearch instances to use for all your queries.
-opensearch.hosts: {{ (master_eligible_nodes | map(attribute='hostname') | map('regex_replace', '^(.*)$', '\\1.' + cluster_vars.dns_user_domain)) if (cluster_vars.inventory_ip=='private' and cluster_vars.dns_server is defined and cluster_vars.dns_server != "")  else  (master_eligible_nodes | map(attribute='hostname') | map('extract', hostvars, 'ansible_default_ipv4') | map(attribute='address')) | map('regex_replace', '^(.*)$', 'https://' + '\\1' + ':9200') }}
+opensearch.hosts: {{ ((master_eligible_nodes | map(attribute='hostname') | map('regex_replace', '^(.*)$', '\\1.' + cluster_vars.dns_user_domain)) if (cluster_vars.inventory_ip=='private' and cluster_vars.dns_server is defined and cluster_vars.dns_server != "")  else  (master_eligible_nodes | map(attribute='hostname') | map('extract', hostvars, 'ansible_default_ipv4') | map(attribute='address'))) | map('regex_replace', '^(.*)$', 'https://' + '\\1' + ':9200') }}
 
 # dashboards uses an index in opensearch to store saved searches, visualizations and
 # dashboards. dashboards creates a new index if the index doesn't already exist.

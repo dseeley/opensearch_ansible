@@ -89,6 +89,7 @@ dashboards_pid_dir: "/var/run/opensearch-dashboards"
 dashboards_log_dir: "/var/log/opensearch-dashboards"
 dashboards_conf_dir: "{{dashboards_home}}/config"
 dashboards_network_host: 0.0.0.0
+dashboards_port: 5601    # 5601 is default
 dashboards_multitenancy_enabled: true
 
 dashboards_ssl_path: "{{ dashboards_conf_dir }}/certs"
@@ -97,6 +98,6 @@ dashboards_ssl_ca_path: "{{dashboards_ssl_path}}/ca-crt.pem"
 dashboards_ssl_crt_path: "{{dashboards_ssl_path}}/opensearch-dashboards-crt.pem"
 dashboards_ssl_key_path: "{{dashboards_ssl_path}}/opensearch-dashboards-key.pem"
 
-#If not using self-signed certificated (should vault-encrypt the key)
+#If not using self-signed certificates (should vault-encrypt the key)
 dashboards_ssl_crt_content: ""
 dashboards_ssl_key_content: ""

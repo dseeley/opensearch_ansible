@@ -25,5 +25,9 @@ WorkingDirectory={{dashboards_home}}
 StandardOutput=journal
 StandardError=inherit
 
+{% if dashboards_port is defined and dashboards_port < 1024 -%}
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+{% endif %}
+
 [Install]
 WantedBy=multi-user.target
