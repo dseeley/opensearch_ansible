@@ -17,6 +17,7 @@
         subject_alt_name: |-
           {% set SANs = ['DNS:' + ansible_hostname,'IP:' + ansible_default_ipv4.address] %}
           {%- if (cluster_vars.dns_user_domain is defined  and  cluster_vars.dns_user_domain != "") -%}
+            {%- set _ = SANs.append('DNS:' + ansible_hostname | regex_replace('-(?!.*-).*') + '.' + cluster_vars.dns_user_domain) -%}
             {%- set _ = SANs.append('DNS:' + ansible_hostname + '.' + cluster_vars.dns_user_domain) -%}
           {%- endif -%}
           {%- if (ansible_default_ipv4.address != ansible_host) -%}
