@@ -5,7 +5,7 @@
   connection: local
   gather_facts: no
   tasks:
-    - { name: "Get dependent roles via ansible-galaxy", local_action: "command ansible-galaxy install --ignore-errors -r requirements.yml", tags: ["always"] }
+    - { name: "Get dependent roles via ansible-galaxy", local_action: "command ansible-galaxy install -fr requirements.yml", tags: ["always"] }
 
 #    - { include_role: { name: "clusterverse/_dependencies", apply: { tags: ["always"] } }, tags: ["always"], when: "clean is defined" }                       #So that opensearch/clean has the cluster variables defined
 #    - { include_role: { name: "opensearch/clean", apply: { tags: ["clusterverse_clean"] } }, tags: ["clusterverse_clean"], when: "clean is defined" }

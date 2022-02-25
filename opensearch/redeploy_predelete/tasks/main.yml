@@ -78,7 +78,7 @@
           until: >
             r__uri__cat_shards.json is defined and
             ((r__uri__cat_shards.json | json_query(jq1)) | length == 0)
-          retries: 1000
+          retries: 500
           vars:
             jq1: "[?contains({{hostnames_to_remove + [null]}}, node)]"
 

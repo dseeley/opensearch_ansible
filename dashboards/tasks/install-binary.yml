@@ -11,8 +11,8 @@
         path: "{{dashboards_home}}"
       register: dashboards_link_stat
 
-    #- debug: msg={{this_dashboards_installed.stat}}
-    #- debug: msg={{dashboards_link_stat.stat}}
+    - debug: msg={{this_dashboards_installed.stat}}
+    - debug: msg={{dashboards_link_stat.stat}}
 
     # If it's already installed and latest, do nothing
     # If it's not installed, install
@@ -38,24 +38,24 @@
             dest: "/opt/{{ dashboards_artifact_location|basename }}"
           when: use_local_artifact is not defined  or  use_local_artifact|bool==false
 
+        - name: dashboards/install-binary | Create the artifact dir if it doesn't exist
+          become: yes
+          file:
+            state: directory
+            path: "{{dashboards_unzip_loc}}"
+            owner: "{{dashboards_user}}"
+            group: "{{dashboards_group}}"
+            mode: 0755
+
         - name: dashboards/install-binary | Extract the dashboards artifact
           become: yes
           unarchive:
             remote_src: "{{ 'yes' if (use_local_artifact is not defined  or  use_local_artifact|bool==false) else 'no' }}"
             src: "{{ '/opt/' if (use_local_artifact is not defined  or  use_local_artifact|bool==false) else '' }}{{dashboards_artifact_location | basename}}"
-            dest: "/opt"
-            creates: "{{dashboards_unzip_loc}}"
-          notify: restart opensearch-dashboards
-
-        # 'owner' and 'group' directives in unarchive do not work for tar.gz files
-        - name: dashboards/install-binary | Change ownership of the dashboards dir
-          become: yes
-          file:
-            state: directory
-            recurse: true
-            path: "{{dashboards_unzip_loc}}"
+            dest: "{{dashboards_unzip_loc}}"
             owner: "{{dashboards_user}}"
             group: "{{dashboards_group}}"
+            extra_opts: [--strip-components=1]
           notify: restart opensearch-dashboards
 
         - name: dashboards/install-binary | Create the dashboards link

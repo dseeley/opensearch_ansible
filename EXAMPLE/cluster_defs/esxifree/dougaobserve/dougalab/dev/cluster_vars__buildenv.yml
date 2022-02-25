@@ -16,20 +16,20 @@ cluster_vars:
 #    nsupdate_cfg: {server: "", key_name: "", key_secret: ""}      # If you're using bind9 (or other nsupdate-compatible 'dns_server')
 
     hosttype_vars:
-      data:
-        auto_volumes:
-          - { mountpoint: "{{osearch_data_dir}}", volume_size: 5, provisioning_type: "thin", fstype: "ext4" }
-        flavor: { num_cpus: "2", memory_mb: "4096" }
-        version: "{{osearch_version | regex_replace('\\.', '_') | default('')}}"
-        networks: [ &data_NET1 { networkName: "VM Network", virtualDev: vmxnet3 } ]
-        vms_by_az: { a: 1, b: 1, c: 0 }
-
       master:
         auto_volumes:
           - { mountpoint: "{{osearch_data_dir}}", volume_size: 2, provisioning_type: "thin", fstype: "ext4" }
         flavor: { num_cpus: "2", memory_mb: "2048" }
         version: "{{osearch_version | regex_replace('\\.', '_') | default('')}}"
         networks: [ &master_NET1 { networkName: "VM Network", virtualDev: vmxnet3 } ]
+        vms_by_az: { a: 1, b: 1, c: 1 }
+
+      data:
+        auto_volumes:
+          - { mountpoint: "{{osearch_data_dir}}", volume_size: 5, provisioning_type: "thin", fstype: "ext4" }
+        flavor: { num_cpus: "2", memory_mb: "4096" }
+        version: "{{osearch_version | regex_replace('\\.', '_') | default('')}}"
+        networks: [ &data_NET1 { networkName: "VM Network", virtualDev: vmxnet3 } ]
         vms_by_az: { a: 1, b: 1, c: 1 }
 
       dashboards:

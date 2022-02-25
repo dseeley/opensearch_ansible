@@ -28,7 +28,7 @@
   become: yes
   become_user: "{{osearch_user}}"
   uri:
-    url: "https://localhost:9200/_template/{{item['name']}}"
+    url: "https://localhost:9200/_index_template/{{item['name']}}"
     method: PUT
     status_code: 200
     user: "admin"
@@ -39,6 +39,6 @@
     client_cert: "{{osearch_ssl_crt_path if osearch_ssl_clientauth_mode in ['REQUIRE', 'OPTIONAL'] else omit}}"
     client_key: "{{osearch_ssl_key_path if osearch_ssl_clientauth_mode in ['REQUIRE', 'OPTIONAL'] else omit}}"
     validate_certs: no
-  with_items: "{{ osearch_mapping_templates }}"
+  with_items: "{{ osearch_index_templates }}"
   run_once: yes
-  when: osearch_mapping_templates is defined
+  when: osearch_index_templates is defined

@@ -21,7 +21,7 @@
     r__uri__cluster_health.json.relocating_shards==0 and
     r__uri__cluster_health.json.unassigned_shards==0 and
     r__uri__cluster_health.json.delayed_unassigned_shards==0
-  retries: 1000
+  retries: 500
   run_once: true
 
 - name: opensearch/test | r__uri__cluster_health

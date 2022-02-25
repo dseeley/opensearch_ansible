@@ -8,11 +8,15 @@ After=network-online.target
 Type=simple
 User={{dashboards_user}}
 Group={{dashboards_group}}
+PrivateTmp=true
 
 Environment=KBN_HOME={{dashboards_home}}
 Environment=KBN_PATH_CONF={{dashboards_conf_dir}}
 
-ExecStart={{dashboards_home}}/bin/opensearch-dashboards --logging.dest="{{dashboards_log_dir}}/dashboards.log" --pid.file="{{dashboards_pid_dir}}/dashboards.pid"
+EnvironmentFile=-/etc/default/opensearch-dashboards
+EnvironmentFile=-/etc/sysconfig/opensearch-dashboards
+
+ExecStart={{dashboards_home}}/bin/opensearch-dashboards
 
 Restart=on-failure
 RestartSec=3
