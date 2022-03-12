@@ -17,7 +17,7 @@ cluster_vars:
       cidr_ip: "{{_ssh_whitelist}}"
       rule_desc: "SSH Access"
     - proto: "tcp"
-      ports: [443,5601]
+      ports: ["{{dashboards_port | default(5601)}}"]
       cidr_ip: "{{_ssh_whitelist}}"
       rule_desc: "{{ cluster_name }} Dashboards UI access"
     - proto: all
