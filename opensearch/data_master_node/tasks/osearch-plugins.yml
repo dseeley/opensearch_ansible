@@ -1,7 +1,7 @@
 ---
 
 #List currently installed plugins
-- name: opensearch/install-plugins | Check installed opensearch plugins
+- name: opensearch/osearch-plugins | Check installed opensearch plugins
   become: yes
   become_user: "{{osearch_user}}"
   shell: "{{osearch_home}}/bin/opensearch-plugin list | grep -vE 'x-pack'"
@@ -13,7 +13,7 @@
     CONF_DIR: "{{ osearch_conf_dir }}"
 
 ## This removes any currently installed plugins (to prevent errors when reinstalling)
-#- name: opensearch/install-plugins | Remove opensearch plugins
+#- name: opensearch/osearch-plugins | Remove opensearch plugins
 #  become: yes
 #  become_user: "{{osearch_user}}"
 #  command: "{{osearch_home}}/bin/opensearch-plugin remove {{item}} --silent"
@@ -25,7 +25,7 @@
 #  environment:
 #    CONF_DIR: "{{ osearch_conf_dir }}"
 
-- name: opensearch/install-plugins | Install opensearch plugins
+- name: opensearch/osearch-plugins | Install opensearch plugins
   become: yes
   become_user: "{{osearch_user}}"
   command: "{{osearch_home}}/bin/opensearch-plugin install {{ item.plugin }} --batch --silent {% if item.proxy_host is defined and item.proxy_host != '' and item.proxy_port is defined and item.proxy_port != ''%} -DproxyHost={{ item.proxy_host }} -DproxyPort={{ item.proxy_port }} {% elif osearch_proxy_host is defined and osearch_proxy_host != '' %} -DproxyHost={{ osearch_proxy_host }} -DproxyPort={{ osearch_proxy_port }} {% endif %}"
@@ -42,6 +42,6 @@
   delay: 5
 
 #Set permissions on plugins directory
-- name: opensearch/install-plugins | Set Plugin Directory Permissions
+- name: opensearch/osearch-plugins | Set Plugin Directory Permissions
   become: yes
   file: state=directory path={{ osearch_home }}/plugins owner={{ osearch_user }} group={{ osearch_group }} recurse=yes

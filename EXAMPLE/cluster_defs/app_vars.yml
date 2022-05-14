@@ -1,8 +1,8 @@
 ---
 
-playbook_ca_yaml: "{{playbook_dir}}/cluster_defs/{{ cloud_type }}/{{ clusterid }}/{{ region }}/{{ buildenv }}/_ssl/ownca.yml"
+playbook_ca_yaml: "{{playbook_dir}}/cluster_defs/ssl_ca.yml"
 
-osearch_version: "1.3.0"
+osearch_version: "1.3.1"      # "1.2.4"
 osearch_artifact_location: "https://artifacts.opensearch.org/releases/bundle/opensearch/{{osearch_version}}/opensearch-{{osearch_version}}-linux-{{ 'x64' if ansible_architecture == 'x86_64' else 'arm64' if ansible_architecture == 'aarch64' else ansible_architecture }}.tar.gz"
 osearch_user: opensearch
 osearch_group: opensearch
@@ -27,7 +27,6 @@ osearch_network_bind_host: 0.0.0.0
 #  - plugin: ingest-geoip
 
 osearch_ssl_path: "{{ osearch_conf_dir }}"
-
 osearch_ssl_ca_path: "{{osearch_ssl_path}}/ca-crt.pem"
 osearch_ssl_crt_path: "{{osearch_ssl_path}}/opensearch-crt.pem"
 osearch_ssl_key_path: "{{osearch_ssl_path}}/opensearch-key.pem"
@@ -35,23 +34,105 @@ osearch_admin_certificate: "{{osearch_ssl_path}}/admin-crt.pem"
 osearch_admin_key: "{{osearch_ssl_path}}/admin-key.pem"
 osearch_ssl_clientauth_mode: "OPTIONAL"      # Whether we require clients to user certificates to authenticate.  "REQUIRE", "OPTIONAL" or "NONE"
 
-osearch_internal_users:
+osearch_static_users:
   admin:
     _password: "CHANGEME"
     reserved: true
     backend_roles: ["admin"]
-    description: "admin user"
+    attributes: { description: "admin user" }
 
   kibanaserver:
     _password: "CHANGEME"
     reserved: true
-    description: "kibanaserver user"
+    attributes: { description: "kibanaserver user" }
 
-osearch_users:
+osearch_internal_users:
   dougal:
     password: "CHANGEME"
     opendistro_security_roles: ["all_access"]
-    attributes: {"name": "Dougal Seeley"}
+    attributes: { "name": "Dougal Seeley" }
+
+osearch_roles:
+  ro_global:
+    description: Permission to read the global tenant and all the indexes
+    cluster_permissions:
+      - cluster_composite_ops_ro
+    index_permissions:
+      - index_patterns: [ '*' ]
+        allowed_actions: [ 'read' ]
+    tenant_permissions:
+      - tenant_patterns: [ 'global_tenant' ]
+        allowed_actions: [ 'read' ]
+
+osearch_rolesmapping:
+  ro_global:
+    backend_roles: [ "NewYorkUsers", "LondonUsers" ]
+    hosts: []
+    users: []
+
+## This is only needed for non-internal configs (which is enabled by default), but this example shows both internal and saml available for authentication, with LDAP being used to get the backend roles for authorization (Azure SAML does not provide group names from cloud-managed groups, only IDs).
+#osearch_security_config:
+#  dynamic:
+#    http:
+#      anonymous_auth_enabled: false
+#    authc:
+#      basic_internal_auth_domain:
+#        order: 0
+#        description: "HTTP basic authentication using the internal user database"
+#        http_enabled: true
+#        transport_enabled: true
+#        http_authenticator:
+#          type: basic
+#          challenge: false
+#        authentication_backend:
+#          type: internal
+#      saml_auth_domain:
+#        order: 1
+#        description: "Azure SAML provider"
+#        http_enabled: true
+#        transport_enabled: false
+#        http_authenticator:
+#          type: saml
+#          challenge: true
+#          config:
+#            idp:
+#              metadata_url: "https://login.microsoftonline.com/<Tenant ID>/federationmetadata/2007-06/federationmetadata.xml?appid=<Application_ID>"
+#              entity_id: "https://sts.windows.net/<Tenant_ID>/"
+#            sp:
+#              entity_id: "opensearch-dashboards.example.com"                                    # Not a URL, just a string to identify the SP at the IDP
+#            kibana_url: "https://opensearch-dashboards.example.com:5601/"
+#            subject_key: ""                                                                     # IMPORTANT - there seems to be a problem if this is omitted, or if it is set to anything if it is not needed.  Default is NameID, which Azure uses, but if you set it to this, you get a 500 error.
+#            roles_key: "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+#            exchange_key: PtnpKLyzpgtjrNkLbHWrCo9dTuyRAos6
+#        authentication_backend:
+#          type: noop
+#    authz:
+#      ldap_roles:
+#        description: "MS Active Directory LDAP"
+#        http_enabled: true
+#        transport_enabled: true
+#        authorization_backend:
+#          type: ldap
+#          config:
+#            enable_ssl: false
+#            enable_start_tls: false
+#            enable_ssl_client_auth: false
+#            verify_hostnames: true
+#            hosts:
+#              - ldap1.example.com:389
+#            bind_dn: CN=LDAPUser,CN=Users,DC=example,DC=com
+#            password: LDAPpassword
+#            userbase: OU=Company Staffing,DC=example,DC=com
+#            usersearch: (uid={0})
+#            username_attribute: cn
+#            skip_users:
+#              - Administrator
+#            rolebase: OU=Groups,DC=example,DC=com
+#            rolesearch: (member={0})
+#            userroleattribute: null
+#            userrolename: disabled
+#            rolename: cn
+#            resolve_nested_roles: true
 
 
 osearch_index_templates:
@@ -95,7 +176,7 @@ osearch_index_templates:
 
 ###### Dashboards ######
 
-dashboards_version: "1.3.0"
+dashboards_version: "1.3.2"
 dashboards_artifact_location: "https://artifacts.opensearch.org/releases/bundle/opensearch-dashboards/{{dashboards_version}}/opensearch-dashboards-{{dashboards_version}}-linux-{{ 'x64' if ansible_architecture == 'x86_64' else 'arm64' if ansible_architecture == 'aarch64' else ansible_architecture }}.tar.gz"
 dashboards_user: "{{osearch_user}}"
 dashboards_group: "{{osearch_group}}"

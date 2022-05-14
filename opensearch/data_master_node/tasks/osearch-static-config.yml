@@ -1,6 +1,6 @@
 ---
 
-- name: opensearch/install-config | Create pid, log and conf directories
+- name: opensearch/osearch-static-config | Create pid, log and conf directories
   become: yes
   file:
     path: "{{ item }}"
@@ -14,7 +14,7 @@
     - "{{osearch_conf_dir}}"
 
 #Create data directory if mountpoint doesn't exist already
-- name: opensearch/install-config | Create data dir if it doesn't exist
+- name: opensearch/osearch-static-config | Create data dir if it doesn't exist
   become: yes
   file:
     path: "{{osearch_data_dir}}"
@@ -24,7 +24,7 @@
     mode: 0755
   notify: restart opensearch
 
-- name: opensearch/install-config | Create systemd file
+- name: opensearch/osearch-static-config | Create systemd file
   become: yes
   template:
     src: etc/systemd/system/opensearch.service.j2
@@ -35,7 +35,7 @@
   - reload systemd configuration
   - restart opensearch
 
-- name: opensearch/install-config | Create jvm.options file
+- name: opensearch/osearch-static-config | Create jvm.options file
   become: yes
   template:
     src: opt/opensearch/config/jvm.options.j2
@@ -48,7 +48,7 @@
   vars:
     osearch_heap_size: "{{ (ansible_memtotal_mb / 2) | round | int | abs }}m"
 
-- name: opensearch/install-config | Create main opensearch config file
+- name: opensearch/osearch-static-config | Create main opensearch config file
   become: yes
   template:
     src: opt/opensearch/config/opensearch.yml.j2
@@ -59,7 +59,7 @@
     force: yes
   notify: restart opensearch
 
-- name: opensearch/install-config | Create tmpfiles.d
+- name: opensearch/osearch-static-config | Create tmpfiles.d
   become: yes
   copy:
     content: |
@@ -71,7 +71,7 @@
     force: yes
   notify: restart opensearch
 
-- name: opensearch/install-config | Create unicast_hosts.txt (don't notify restart)
+- name: opensearch/osearch-static-config | Create unicast_hosts.txt (don't notify restart)
   become: yes
   copy:
     content: |
@@ -84,7 +84,7 @@
     mode: 0600
     force: yes
 
-- name: opensearch/install-config | Create sysctl.d/opensearch.conf
+- name: opensearch/osearch-static-config | Create sysctl.d/opensearch.conf
   become: yes
   copy:
     content: |
@@ -96,8 +96,8 @@
     force: yes
   notify: restart opensearch
 
-#This needs to be set programmatically, or opensearch will not start.  A reboot will do it, but not ideal.
-- name: opensearch/install-config | set vm.max_map_count
+#This needs to be set programmatically, or opensearch will not start.  A reboot will also do it, but not ideal.
+- name: opensearch/osearch-static-config | set vm.max_map_count
   become: yes
   sysctl:
     name: vm.max_map_count

@@ -1,12 +1,12 @@
 ---
 
 - block:
-    - name: dashboards/certs | Generate RSA private key
+    - name: dashboards/osearch-certs | Generate RSA private key
       community.crypto.openssl_privatekey_pipe:
       register: r__openssl_privatekey_pipe
       no_log: true
 
-    - name: dashboards/certs | Generate CSR
+    - name: dashboards/osearch-certs | Generate CSR
       community.crypto.openssl_csr_pipe:
         privatekey_content: "{{r__openssl_privatekey_pipe.privatekey}}"
         key_usage: ["digitalSignature", "keyCertSign", "keyEncipherment"]
@@ -26,16 +26,16 @@
           {{ SANs }}
       register: r__openssl_csr_pipe
 
-    - name: dashboards/certs | Generate the self-signed certificate
+    - name: dashboards/osearch-certs | Generate the self-signed certificate
       community.crypto.x509_certificate_pipe:
         provider: ownca
-        ownca_content: "{{ssl_ownca['ca-crt.pem']}}"
-        ownca_privatekey_content: "{{ssl_ownca['ca-key.pem']}}"
+        ownca_content: "{{ssl_ca['ca-crt.pem']}}"
+        ownca_privatekey_content: "{{ssl_ca['ca-key.pem']}}"
         csr_content: "{{r__openssl_csr_pipe.csr}}"
         selfsigned_not_after: "+3652d"       # Expiry in 10 years (incl leap years)
       register: r__x509_certificate_pipe
 
-    - name: dashboards/certs | copy self-signed certs to remote
+    - name: dashboards/osearch-certs | copy self-signed certs to remote
       block:
         - name: certs | create cert directory on remote
           file: path={{dashboards_ssl_path}} state=directory owner={{dashboards_user}} group={{dashboards_group}}
@@ -50,7 +50,7 @@
             force: "{{ 'yes' if recreate_certs is defined and recreate_certs|bool else 'no' }}"
           no_log: true
           with_items:
-            - { path: '{{dashboards_ssl_ca_path}}', val: "{{ssl_ownca['ca-crt.pem']}}", mode: '0644'}
+            - { path: '{{dashboards_ssl_ca_path}}', val: "{{ssl_ca['ca-crt.pem']}}", mode: '0644'}
             - { path: '{{dashboards_ssl_crt_path}}', val: "{{r__x509_certificate_pipe.certificate}}", mode: '0644'}
             - { path: '{{dashboards_ssl_key_path}}', val: "{{r__openssl_privatekey_pipe.privatekey}}", mode: '0600'}
       become: yes
@@ -58,12 +58,12 @@
   when: dashboards_ssl_is_self_signed|bool
 
 
-- name: dashboards/certs | copy real certs to remote
+- name: dashboards/osearch-certs | copy real certs to remote
   block:
-    - name: dashboards/certs | create cert directory on remote
+    - name: dashboards/osearch-certs | create cert directory on remote
       file: path={{dashboards_ssl_path}} state=directory owner={{dashboards_user}} group={{dashboards_group}}
 
-    - name: dashboards/certs | Copy SSL certificates to remote
+    - name: dashboards/osearch-certs | Copy SSL certificates to remote
       copy:
         content: "{{ item.val }}"
         dest: "{{ item.path }}"

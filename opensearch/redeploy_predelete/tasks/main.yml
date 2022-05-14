@@ -24,7 +24,7 @@
               uri:
                 url: "https://localhost:9200/_cluster/voting_config_exclusions?node_names={{ voting_config_exclusions_nodes | join(',') }}&timeout=2m"
                 user: "admin"
-                password: "{{osearch_internal_users['admin']['_password']}}"
+                password: "{{osearch_static_users['admin']['_password']}}"
                 force_basic_auth: yes
                 method: POST
                 client_cert: "{{osearch_ssl_crt_path if osearch_ssl_clientauth_mode in ['REQUIRE', 'OPTIONAL'] else omit}}"
@@ -35,7 +35,7 @@
               uri:
                 url: "https://localhost:9200/_cluster/state?filter_path=metadata.cluster_coordination.voting_config_exclusions"
                 user: "admin"
-                password: "{{osearch_internal_users['admin']['_password']}}"
+                password: "{{osearch_static_users['admin']['_password']}}"
                 force_basic_auth: yes
                 method: GET
                 client_cert: "{{osearch_ssl_crt_path if osearch_ssl_clientauth_mode in ['REQUIRE', 'OPTIONAL'] else omit}}"
@@ -54,7 +54,7 @@
           uri:
             url: "https://localhost:9200/_cluster/settings"
             user: "admin"
-            password: "{{osearch_internal_users['admin']['_password']}}"
+            password: "{{osearch_static_users['admin']['_password']}}"
             force_basic_auth: yes
             method: PUT
             body_format: json
@@ -68,7 +68,7 @@
           uri:
             url: "https://localhost:9200/_cat/shards?format=json"
             user: "admin"
-            password: "{{osearch_internal_users['admin']['_password']}}"
+            password: "{{osearch_static_users['admin']['_password']}}"
             force_basic_auth: yes
             client_cert: "{{osearch_ssl_crt_path if osearch_ssl_clientauth_mode in ['REQUIRE', 'OPTIONAL'] else omit}}"
             client_key: "{{osearch_ssl_key_path if osearch_ssl_clientauth_mode in ['REQUIRE', 'OPTIONAL'] else omit}}"
@@ -133,7 +133,7 @@
           uri:
             url: "https://localhost:9200/_cluster/voting_config_exclusions"
             user: "admin"
-            password: "{{osearch_internal_users['admin']['_password']}}"
+            password: "{{osearch_static_users['admin']['_password']}}"
             force_basic_auth: yes
             method: DELETE
             client_cert: "{{osearch_ssl_crt_path if osearch_ssl_clientauth_mode in ['REQUIRE', 'OPTIONAL'] else omit}}"
@@ -145,7 +145,7 @@
           uri:
             url: "https://localhost:9200/_cluster/settings"
             user: "admin"
-            password: "{{osearch_internal_users['admin']['_password']}}"
+            password: "{{osearch_static_users['admin']['_password']}}"
             force_basic_auth: yes
             method: PUT
             body_format: json

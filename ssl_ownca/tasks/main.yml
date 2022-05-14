@@ -41,7 +41,8 @@
     - name: "ssl_ownca | Create {{ playbook_ca_yaml }}"
       copy:
         content: |
-          ssl_ownca:
+          ## Note: this is a self-signed CA certificate, generated in "{{ ansible_play_name }}" 
+          ssl_ca:
             ca-crt.pem: |
               {{ r__x509_certificate_pipe.certificate | trim | indent(4) }}
             ca-key.pem: !vault |
@@ -50,7 +51,7 @@
         force: yes
   run_once: yes
   delegate_to: localhost
-  when: ssl_ownca is not defined
+  when: ssl_ca is not defined
 
 - name: "ssl_ownca | Reload {{ playbook_ca_yaml }} - for all hosts"
   include_vars: "{{ playbook_ca_yaml }}"

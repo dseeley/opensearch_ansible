@@ -46,7 +46,7 @@ opensearch.hosts: {{ ((master_eligible_nodes | map(attribute='hostname') | map('
 # index at startup. Your dashboards users still need to authenticate with opensearch, which
 # is proxied through the dashboards server.
 opensearch.username: "kibanaserver"
-opensearch.password: "{{ osearch_internal_users['kibanaserver']['_password'] }}"
+opensearch.password: "{{ osearch_static_users['kibanaserver']['_password'] }}"
 
 # dashboards can also authenticate to opensearch via "service account tokens".
 # If may use this token instead of a username/password.
@@ -84,7 +84,7 @@ opensearch.ssl.verificationMode: 'certificate'
 
 # List of dashboards client-side headers to send to opensearch. To send *no* client-side
 # headers, set this value to [] (an empty list).
-opensearch.requestHeadersWhitelist: [ authorization,securitytenant ]
+opensearch.requestHeadersWhitelist: ["securitytenant","Authorization"]
 
 # Header names and values that are sent to opensearch. Any custom headers cannot be overwritten
 # by client-side headers, regardless of the dashboards.requestHeadersWhitelist configuration.
@@ -120,8 +120,17 @@ logging.dest: {{ dashboards_log_dir }}/dashboards.log
 # Supported languages are the following: English - en , by default , Chinese - zh-CN .
 #i18n.locale: "en"
 
-{%- if dashboards_multitenancy_enabled is defined and dashboards_multitenancy_enabled|bool %}
+{% if dashboards_multitenancy_enabled is defined and dashboards_multitenancy_enabled|bool %}
 opensearch_security.multitenancy.enabled: true
+opensearch_security.multitenancy.tenants.enable_global: true
+opensearch_security.multitenancy.tenants.enable_private: true
 opensearch_security.multitenancy.tenants.preferred: ["Private", "Global"]
+opensearch_security.multitenancy.enable_filter: true
 opensearch_security.readonly_mode.roles: ["kibana_read_only"]
+{% endif %}
+
+{% if osearch_security_config.dynamic.authc.saml_auth_domain is defined %}
+# SAML SSO
+server.xsrf.whitelist: ["/_plugins/_security/saml/acs/idpinitiated", "/_plugins/_security/saml/acs", "/_plugins/_security/saml/logout", "/_opendistro/_security/saml/acs/idpinitiated", "/_opendistro/_security/saml/acs", "/_opendistro/_security/saml/logout"]
+opensearch_security.auth.type: "saml"
 {% endif %}

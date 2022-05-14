@@ -1,19 +1,19 @@
 ---
 
 - include_tasks:
-    file: hostconfig.yml
+    file: osearch-host-config.yml
 
 - include_tasks:
-    file: install-binary.yml
+    file: osearch-binary.yml
 
 - include_tasks:
-    file: install-plugins.yml
+    file: osearch-plugins.yml
 
 - include_tasks:
-    file: install-config.yml
+    file: osearch-static-config.yml
 
 - include_tasks:
-    file: certs.yml
+    file: osearch-certs.yml
 
 
 - name: flush the handlers, (re)starting opensearch, if necessary
@@ -21,10 +21,13 @@
 
 
 - include_tasks:
-    file: users.yml
+    file: osearch-security-accesscontrol.yml
+
+- include_tasks:
+    file: osearch-security-config.yml
 
 
-- name: Apply opensearch templates
+- name: opensearch/osearch-templates | Apply templates
   become: yes
   become_user: "{{osearch_user}}"
   uri:
@@ -32,7 +35,7 @@
     method: PUT
     status_code: 200
     user: "admin"
-    password: "{{osearch_internal_users['admin']['_password']}}"
+    password: "{{osearch_static_users['admin']['_password']}}"
     force_basic_auth: yes
     body_format: json
     body: "{{ item['content'] }}"

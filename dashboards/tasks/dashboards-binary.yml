@@ -1,12 +1,12 @@
 ---
 
 - block:
-    - name: dashboards/install-binary | Check dashboards installed version
+    - name: dashboards/osearch-binary | Check dashboards installed version
       stat:
         path: "{{dashboards_unzip_loc}}"
       register: this_dashboards_installed
 
-    - name: dashboards/install-binary | Check any dashboards installed
+    - name: dashboards/osearch-binary | Check any dashboards installed
       stat:
         path: "{{dashboards_home}}"
       register: dashboards_link_stat
@@ -19,26 +19,26 @@
     # If a different version is installed, stop the service and remove the soft link.
     - block:
         - block:
-            - name: dashboards/install-binary | Stop/Disable dashboards
+            - name: dashboards/osearch-binary | Stop/Disable dashboards
               service:
                 name: opensearch-dashboards
                 state: stopped
                 enabled: no
 
-            - name: dashboards/install-binary | Remove the dashboards link
+            - name: dashboards/osearch-binary | Remove the dashboards link
               file:
                 path: "{{dashboards_home}}"
                 state: absent
           when: dashboards_link_stat.stat.exists and dashboards_link_stat.stat.lnk_source == '/opt/opensearch-dashboards-{{dashboards_version}}'
 
-        - name: dashboards/install-binary | Get dashboards artifact
+        - name: dashboards/osearch-binary | Get dashboards artifact
           become: yes
           get_url:
             url: "{{dashboards_artifact_location}}"
             dest: "/opt/{{ dashboards_artifact_location|basename }}"
           when: use_local_artifact is not defined  or  use_local_artifact|bool==false
 
-        - name: dashboards/install-binary | Create the artifact dir if it doesn't exist
+        - name: dashboards/osearch-binary | Create the artifact dir if it doesn't exist
           become: yes
           file:
             state: directory
@@ -47,7 +47,7 @@
             group: "{{dashboards_group}}"
             mode: 0755
 
-        - name: dashboards/install-binary | Extract the dashboards artifact
+        - name: dashboards/osearch-binary | Extract the dashboards artifact
           become: yes
           unarchive:
             remote_src: "{{ 'yes' if (use_local_artifact is not defined  or  use_local_artifact|bool==false) else 'no' }}"
@@ -58,7 +58,7 @@
             extra_opts: [--strip-components=1]
           notify: restart opensearch-dashboards
 
-        - name: dashboards/install-binary | Create the dashboards link
+        - name: dashboards/osearch-binary | Create the dashboards link
           become: yes
           file:
             src: "{{dashboards_unzip_loc}}"

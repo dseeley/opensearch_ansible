@@ -1,6 +1,6 @@
 ---
 
-- name: opensearch/users | Create initial internal_users.yml
+- name: opensearch/osearch-security-accesscontrol | Create initial internal_users.yml
   become: yes
   copy:
     content: |+
@@ -18,10 +18,10 @@
     mode: 0644
   run_once: yes
 
-- name: opensearch/users | Check blowfish (bcrypt) is installed.  If not, install 'passlib' and 'bcrypt'
+- name: opensearch/osearch-security-accesscontrol | Check blowfish (bcrypt) is installed.  If not, install 'passlib' and 'bcrypt'
   assert: { that: "'0' | password_hash('blowfish') | length>10", fail_msg: "blowfish (bcrypt) is not installed.  Please install 'passlib' and 'bcrypt'", success_msg: "blowfish installed" }
 
-- name: opensearch/users | Add internal users
+- name: opensearch/osearch-security-accesscontrol | Add static users
   become: yes
   become_user: "{{osearch_user}}"
   blockinfile:
@@ -32,24 +32,24 @@
       {% if item.value['backend_roles'] is defined %}
         backend_roles: {{ item.value['backend_roles'] }}
       {% endif %}
-      {% if item.value['description'] is defined %}
-        description: {{ item.value['description'] }}
+      {% if item.value['attributes'] is defined %}
+        attributes: {{ item.value['attributes'] }}
       {% endif %}
     dest: "{{osearch_home}}/plugins/opensearch-security/securityconfig/internal_users.yml"
     insertafter: EOF
     marker: "## {mark} opensearch {{item.key}} configuration ##"
-  with_dict: "{{osearch_internal_users}}"
+  with_dict: "{{osearch_static_users}}"
   run_once: yes
 
 - block:
-    - name: "opensearch/users | Make {{osearch_securityadmin_sh}} executable"
+    - name: "opensearch/osearch-security-accesscontrol | Make {{osearch_securityadmin_sh}} executable"
       file: dest={{osearch_securityadmin_sh}} mode=u+x
 
-    - name: opensearch/users | Check opensearch security index existence
+    - name: opensearch/osearch-security-accesscontrol | Check opensearch security index existence
       uri:
         url: "https://localhost:9200/.opendistro_security"
         user: "admin"
-        password: "{{osearch_internal_users['admin']['_password']}}"
+        password: "{{osearch_static_users['admin']['_password']}}"
         force_basic_auth: yes
         method: HEAD
         status_code: [200, 401, 404]      #(found, unauthorised, not-found)
@@ -58,7 +58,7 @@
         validate_certs: no
       register: r__uri__security_index
 
-    - name: opensearch/users | Initialize the opensearch security index
+    - name: opensearch/osearch-security-accesscontrol | Initialize the opensearch security index
       shell: >
         {{osearch_securityadmin_sh}}
         -cacert {{ osearch_ssl_ca_path }} -cert {{osearch_admin_certificate}} -key {{osearch_admin_key}}
@@ -74,24 +74,59 @@
     osearch_securityadmin_sh: "{{osearch_home}}/plugins/opensearch-security/tools/securityadmin.sh"
 
 
-- name: opensearch/users | Add opensearch users
+- name: opensearch/osearch-security-accesscontrol | Add internal users
   become: yes
   become_user: "{{osearch_user}}"
   uri:
     url: "https://localhost:9200/_plugins/_security/api/internalusers/{{item.key}}"
     method: PUT
     body_format: json
-    body:
-      password: "{{item.value['password']}}"
-      opendistro_security_roles: "{{item.value['opendistro_security_roles'] | default(omit)}}"
-      backend_roles: "{{item.value['backend_roles'] | default(omit)}}"
+    body: "{{ item.value }}"
     client_cert: "{{osearch_ssl_crt_path if osearch_ssl_clientauth_mode in ['REQUIRE', 'OPTIONAL'] else omit}}"
     client_key: "{{osearch_ssl_key_path if osearch_ssl_clientauth_mode in ['REQUIRE', 'OPTIONAL'] else omit}}"
     status_code: [200, 201, 202, 204]
     user: "admin"
-    password: "{{osearch_internal_users['admin']['_password']}}"
+    password: "{{osearch_static_users['admin']['_password']}}"
     force_basic_auth: yes
     validate_certs: no
   run_once: yes
-  with_dict: "{{osearch_users}}"
+  with_dict: "{{osearch_internal_users}}"
+
+
+- name: opensearch/osearch-security-accesscontrol | Add roles
+  become: yes
+  become_user: "{{osearch_user}}"
+  uri:
+    url: "https://localhost:9200/_plugins/_security/api/roles/{{item.key}}"
+    method: PUT
+    body_format: json
+    body: "{{ item.value }}"
+    client_cert: "{{osearch_ssl_crt_path if osearch_ssl_clientauth_mode in ['REQUIRE', 'OPTIONAL'] else omit}}"
+    client_key: "{{osearch_ssl_key_path if osearch_ssl_clientauth_mode in ['REQUIRE', 'OPTIONAL'] else omit}}"
+    status_code: [200, 201, 202, 204]
+    user: "admin"
+    password: "{{osearch_static_users['admin']['_password']}}"
+    force_basic_auth: yes
+    validate_certs: no
+  run_once: yes
+  with_dict: "{{osearch_roles}}"
+
+
+- name: opensearch/osearch-security-accesscontrol | Add role mappings
+  become: yes
+  become_user: "{{osearch_user}}"
+  uri:
+    url: "https://localhost:9200/_plugins/_security/api/rolesmapping/{{item.key}}"
+    method: PUT
+    body_format: json
+    body: "{{ item.value }}"
+    client_cert: "{{osearch_ssl_crt_path if osearch_ssl_clientauth_mode in ['REQUIRE', 'OPTIONAL'] else omit}}"
+    client_key: "{{osearch_ssl_key_path if osearch_ssl_clientauth_mode in ['REQUIRE', 'OPTIONAL'] else omit}}"
+    status_code: [200, 201, 202, 204]
+    user: "admin"
+    password: "{{osearch_static_users['admin']['_password']}}"
+    force_basic_auth: yes
+    validate_certs: no
+  run_once: yes
+  with_dict: "{{osearch_rolesmapping}}"
 

@@ -1,14 +1,14 @@
 ---
 
-- name: opensearch/certs | admin cert
+- name: opensearch/osearch-certs | admin cert
   block:
-    - name: opensearch/certs/admin | Generate RSA private key
+    - name: opensearch/osearch-certs/admin | Generate RSA private key
       community.crypto.openssl_privatekey_pipe:
         format: "pkcs8"
       register: r__openssl_privatekey_pipe__admin
       no_log: true
 
-    - name: opensearch/certs/admin | Generate CSR
+    - name: opensearch/osearch-certs/admin | Generate CSR
       community.crypto.openssl_csr_pipe:
         privatekey_content: "{{r__openssl_privatekey_pipe__admin.privatekey}}"
         key_usage: ["digitalSignature", "keyEncipherment", "nonRepudiation"]
@@ -19,26 +19,26 @@
         use_common_name_for_san: no
       register: r__openssl_csr_pipe__admin
 
-    - name: opensearch/certs/admin | Generate the self-signed certificate
+    - name: opensearch/osearch-certs/admin | Generate the self-signed certificate
       community.crypto.x509_certificate_pipe:
         provider: ownca
-        ownca_content: "{{ssl_ownca['ca-crt.pem']}}"
-        ownca_privatekey_content: "{{ssl_ownca['ca-key.pem']}}"
+        ownca_content: "{{ssl_ca['ca-crt.pem']}}"
+        ownca_privatekey_content: "{{ssl_ca['ca-key.pem']}}"
         csr_content: "{{r__openssl_csr_pipe__admin.csr}}"
         selfsigned_not_after: "+3652d"       # Expiry in 10 years (incl leap years)
       register: r__x509_certificate_pipe__admin
   run_once: yes
   delegate_to: localhost
 
-- name: opensearch/certs | host certs
+- name: opensearch/osearch-certs | host certs
   block:
-    - name: opensearch/certs/host | Generate RSA private key
+    - name: opensearch/osearch-certs/host | Generate RSA private key
       community.crypto.openssl_privatekey_pipe:
         format: "pkcs8"
       register: r__openssl_privatekey_pipe
       no_log: true
 
-    - name: opensearch/certs/host | Generate CSR
+    - name: opensearch/osearch-certs/host | Generate CSR
       community.crypto.openssl_csr_pipe:
         privatekey_content: "{{r__openssl_privatekey_pipe.privatekey}}"
         key_usage: ["digitalSignature", "keyEncipherment", "nonRepudiation"]
@@ -58,11 +58,11 @@
           {{ SANs }}
       register: r__openssl_csr_pipe
 
-    - name: opensearch/certs/host | Generate the self-signed certificate
+    - name: opensearch/osearch-certs/host | Generate the self-signed certificate
       community.crypto.x509_certificate_pipe:
         provider: ownca
-        ownca_content: "{{ssl_ownca['ca-crt.pem']}}"
-        ownca_privatekey_content: "{{ssl_ownca['ca-key.pem']}}"
+        ownca_content: "{{ssl_ca['ca-crt.pem']}}"
+        ownca_privatekey_content: "{{ssl_ca['ca-key.pem']}}"
         csr_content: "{{r__openssl_csr_pipe.csr}}"
         selfsigned_not_after: "+3652d"       # Expiry in 10 years (incl leap years)
       register: r__x509_certificate_pipe
@@ -70,12 +70,12 @@
 #    - name: r__x509_certificate_pipe
 #      debug: msg={{r__x509_certificate_pipe}}
 
-- name: opensearch/certs | copy certs to remote
+- name: opensearch/osearch-certs | copy certs to remote
   block:
-    - name: opensearch/certs | create cert directory on remote
+    - name: opensearch/osearch-certs | create cert directory on remote
       file: path={{osearch_ssl_path}} state=directory owner={{osearch_user}} group={{osearch_group}}
 
-    - name: opensearch/certs | Copy SSL certificates to remote
+    - name: opensearch/osearch-certs | Copy SSL certificates to remote
       copy:
         content: "{{ item.val }}"
         dest: "{{ item.path }}"
@@ -85,7 +85,7 @@
         force: "{{ 'yes' if recreate_certs is defined and recreate_certs|bool else 'no' }}"
       no_log: true
       with_items:
-        - { path: '{{osearch_ssl_ca_path}}', val: "{{ssl_ownca['ca-crt.pem']}}", mode: '0600' }
+        - { path: '{{osearch_ssl_ca_path}}', val: "{{ssl_ca['ca-crt.pem']}}", mode: '0600' }
         - { path: '{{osearch_ssl_crt_path}}', val: "{{r__x509_certificate_pipe.certificate}}", mode: '0600' }
         - { path: '{{osearch_ssl_key_path}}', val: "{{r__openssl_privatekey_pipe.privatekey}}", mode: '0600' }
         - { path: '{{osearch_admin_certificate}}', val: "{{r__x509_certificate_pipe__admin.certificate}}", mode: '0600' }

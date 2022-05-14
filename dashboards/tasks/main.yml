@@ -1,20 +1,13 @@
 ---
 
-- name: hostconfig | Create dashboards unix group
-  become: yes
-  group:
-    name: "{{dashboards_group}}"
+- include_tasks:
+    file: dashboards-host-config.yml
 
-- name: hostconfig | Add the dashboards user
-  become: yes
-  user:
-    name: "{{dashboards_user}}"
-    groups: "{{dashboards_group}}"
-    system: yes
+- include_tasks:
+    file: dashboards-binary.yml
 
+- include_tasks:
+    file: dashboards-static-config.yml
 
-- include_tasks: install-binary.yml
-
-- include_tasks: install-config.yml
-
-- include_tasks: certs.yml
+- include_tasks:
+    file: dashboards-certs.yml

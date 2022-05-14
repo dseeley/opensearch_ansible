@@ -2,10 +2,9 @@
 
 - name: clusterverse | Deploy the cluster
   hosts: localhost
-  connection: local
   gather_facts: no
   tasks:
-    - { name: "Get dependent roles via ansible-galaxy", local_action: "command ansible-galaxy install -fr requirements.yml", tags: ["always"] }
+    - { name: "Get dependent roles via ansible-galaxy", local_action: "command ansible-galaxy role install -fr requirements.yml", tags: ["always"] }
 
 #    - { include_role: { name: "clusterverse/_dependencies", apply: { tags: ["always"] } }, tags: ["always"], when: "clean is defined" }                       #So that opensearch/clean has the cluster variables defined
 #    - { include_role: { name: "opensearch/clean", apply: { tags: ["clusterverse_clean"] } }, tags: ["clusterverse_clean"], when: "clean is defined" }
@@ -26,11 +25,15 @@
 
 
 ###### opensearch roles
-- name: opensearch | ssl_ownca
+- name: opensearch | load clusterverse deps if not included already
   hosts: all:localhost
   tasks:
     - { include_role: { name: "clusterverse/_dependencies", apply: { tags: ["always"] } }, tags: ["always"], when: "'clusterverse_config' not in ansible_run_tags" }      # If we --skip-tags=clusterverse_config, this will ensure the variables from /cluster_defs are loaded.
     - { include_role: { name: "clusterverse/cluster_hosts", apply: { tags: ["always"] } }, tags: ["always"], when: "'clusterverse_create' not in ansible_run_tags" }      # If we --skip-tags=clusterverse_create, this will ensure cluster_suffix is defined.
+
+- name: opensearch | ssl_ownca
+  hosts: all:localhost
+  tasks:
     - { include_role: { name: "opensearch/ssl_ownca", apply: { tags: ["opensearch_ssl_ownca"] } }, tags: ["opensearch_ssl_ownca"] }
 
 - name: opensearch | opensearch
@@ -53,5 +56,4 @@
 
 - name: clusterverse | Perform cluster readiness operations
   hosts: localhost
-  connection: local
   tasks: [ { include_role: { name: "clusterverse/readiness", apply: { tags: ["clusterverse_readiness"]} }, tags: ["clusterverse_readiness"] } ]

@@ -45,6 +45,7 @@ plugins.security.audit.type: internal_opensearch
 plugins.security.enable_snapshot_restore_privilege: true
 plugins.security.check_snapshot_restore_write_privileges: true
 plugins.security.restapi.roles_enabled: ["all_access", "security_rest_api_access"]
+plugins.security.unsupported.restapi.allow_securityconfig_modification: true
 
 plugins.security.ssl.transport.pemkey_filepath: "{{ osearch_ssl_key_path | basename }}"
 plugins.security.ssl.transport.pemcert_filepath: "{{ osearch_ssl_crt_path | basename }}"
