@@ -2,7 +2,6 @@
 
 merge_dict_vars_list:
   - "./cluster_defs/"
-  - "./cluster_defs/_ssl/"
   - "./cluster_defs/{{ cloud_type }}/"
   - "./cluster_defs/{{ cloud_type }}/{{ region }}/"
   - "./cluster_defs/{{ cloud_type }}/{{ region }}/{{ buildenv }}/"

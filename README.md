@@ -21,15 +21,15 @@ Application configuration is stored in `cluster_defs/**/app_vars.yml` files.
 ### Invocation
 To create a cluster:
 ```
-ansible-playbook cluster.yml -e buildenv=dev -e cloud_type=aws -e region=eu-west-1
+ansible-playbook cluster.yml -e cloud_type=aws -e region=eu-west-1 -e buildenv=dev
 ```
 
 To redeploy a cluster
 ```
-ansible-playbook redeploy.yml -e buildenv=dev -e cloud_type=aws -e region=eu-west-1 -e canary=none
+ansible-playbook redeploy.yml -e cloud_type=aws -e region=eu-west-1 -e buildenv=dev -e canary=none
 ```
 
 To delete a cluster
 ```
-ansible-playbook cluster.yml -e buildenv=dev -e cloud_type=aws -e region=eu-west-1 --tags=clusterverse_clean -e clean=_all_
+ansible-playbook cluster.yml -e cloud_type=aws -e region=eu-west-1 -e buildenv=dev --tags=clusterverse_clean -e clean=_all_
 ```

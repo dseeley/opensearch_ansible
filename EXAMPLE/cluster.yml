@@ -34,6 +34,16 @@
 - name: opensearch | ssl_ownca
   hosts: all:localhost
   tasks:
+    - assert: { that: "'dseeley.ansible_vault_pipe' in galaxy_collections.keys()", fail_msg: "Please ensure the dseeley.ansible_vault_pipe collection is installed:  ansible-galaxy collection install dseeley.ansible_vault_pipe (or ansible-galaxy collection install --ignore-errors -fr requirements.yml)" }
+      vars:
+        galaxy_collections: |-
+          {% set res = {} -%}
+          {% set _galaxy_lookup = lookup('pipe', 'ansible-galaxy collection list', errors='ignore') -%}     {# Note: We cannot use '--format json' in 'ansible-galaxy collection list' command, as it is not present in 2.10.x  #}
+          {%- for sub in (_galaxy_lookup | ternary(_galaxy_lookup, '') | trim).split('\n') | map('trim') | map('regex_replace', '\\s+', ' ') | select | list -%}
+            {% set _ = res.update({sub.split(' ')[0]: {'version': sub.split(' ')[1]|default('')}}) -%}
+          {%- endfor -%}
+          {{ res }}
+
     - { include_role: { name: "opensearch/ssl_ownca", apply: { tags: ["opensearch_ssl_ownca"] } }, tags: ["opensearch_ssl_ownca"] }
 
 - name: opensearch | opensearch

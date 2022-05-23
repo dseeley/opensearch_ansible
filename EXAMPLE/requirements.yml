@@ -8,3 +8,11 @@ roles:
   - name: opensearch
     src: https://github.com/dseeley/opensearch_ansible
     version: master
+
+collections:
+  - name: dseeley.ansible_vault_pipe
+    source: https://galaxy.ansible.com
+
+  - name: https://github.com/dseeley/community.libvirt.git
+    type: git
+    version: develop

@@ -1,5 +1,13 @@
 ---
 
+- name: opensearch/osearch-security-accesscontrol | plugins/opensearch-security/securityconfig directory
+  become: yes
+  become_user: "{{osearch_user}}"
+  file:
+    path: "{{osearch_home}}/plugins/opensearch-security/securityconfig"
+    state: directory
+    mode: 0755
+
 - name: opensearch/osearch-security-accesscontrol | Create initial internal_users.yml
   become: yes
   copy:
@@ -16,7 +24,6 @@
     owner: "{{osearch_user}}"
     group: "{{osearch_group}}"
     mode: 0644
-  run_once: yes
 
 - name: opensearch/osearch-security-accesscontrol | Check blowfish (bcrypt) is installed.  If not, install 'passlib' and 'bcrypt'
   assert: { that: "'0' | password_hash('blowfish') | length>10", fail_msg: "blowfish (bcrypt) is not installed.  Please install 'passlib' and 'bcrypt'", success_msg: "blowfish installed" }
@@ -39,7 +46,7 @@
     insertafter: EOF
     marker: "## {mark} opensearch {{item.key}} configuration ##"
   with_dict: "{{osearch_static_users}}"
-  run_once: yes
+  no_log: yes
 
 - block:
     - name: "opensearch/osearch-security-accesscontrol | Make {{osearch_securityadmin_sh}} executable"
@@ -52,10 +59,12 @@
         password: "{{osearch_static_users['admin']['_password']}}"
         force_basic_auth: yes
         method: HEAD
-        status_code: [200, 401, 404]      #(found, unauthorised, not-found)
+        status_code: [200, 401, 404, 503]      #(found, unauthorised, not-found, service unavailable)
         client_cert: "{{osearch_ssl_crt_path if osearch_ssl_clientauth_mode in ['REQUIRE', 'OPTIONAL'] else omit}}"
         client_key: "{{osearch_ssl_key_path if osearch_ssl_clientauth_mode in ['REQUIRE', 'OPTIONAL'] else omit}}"
         validate_certs: no
+      no_log: yes
+      run_once: true
       register: r__uri__security_index
 
     - name: opensearch/osearch-security-accesscontrol | Initialize the opensearch security index
@@ -89,6 +98,7 @@
     password: "{{osearch_static_users['admin']['_password']}}"
     force_basic_auth: yes
     validate_certs: no
+  no_log: yes
   run_once: yes
   with_dict: "{{osearch_internal_users}}"
 
@@ -108,6 +118,7 @@
     password: "{{osearch_static_users['admin']['_password']}}"
     force_basic_auth: yes
     validate_certs: no
+  no_log: yes
   run_once: yes
   with_dict: "{{osearch_roles}}"
 
@@ -127,6 +138,7 @@
     password: "{{osearch_static_users['admin']['_password']}}"
     force_basic_auth: yes
     validate_certs: no
+  no_log: yes
   run_once: yes
   with_dict: "{{osearch_rolesmapping}}"
 
