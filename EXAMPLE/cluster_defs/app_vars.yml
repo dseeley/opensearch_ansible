@@ -2,7 +2,7 @@
 
 playbook_ca_yaml: "{{playbook_dir}}/cluster_defs/ssl_ca.yml"
 
-osearch_version: "1.3.1"      # "2.0.0-rc1"
+osearch_version: "2.0.0"      #"1.3.1"
 osearch_artifact_location: "https://artifacts.opensearch.org/releases/bundle/opensearch/{{osearch_version}}/opensearch-{{osearch_version}}-linux-{{ 'x64' if ansible_architecture == 'x86_64' else 'arm64' if ansible_architecture == 'aarch64' else ansible_architecture }}.tar.gz"
 osearch_user: opensearch
 osearch_group: opensearch
@@ -176,7 +176,7 @@ osearch_index_templates:
 
 ###### Dashboards ######
 
-dashboards_version: "1.3.2"     # "2.0.0-rc1"
+dashboards_version: "2.0.0"     #"1.3.2"
 dashboards_artifact_location: "https://artifacts.opensearch.org/releases/bundle/opensearch-dashboards/{{dashboards_version}}/opensearch-dashboards-{{dashboards_version}}-linux-{{ 'x64' if ansible_architecture == 'x86_64' else 'arm64' if ansible_architecture == 'aarch64' else ansible_architecture }}.tar.gz"
 dashboards_user: "{{osearch_user}}"
 dashboards_group: "{{osearch_group}}"
