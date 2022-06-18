@@ -84,18 +84,6 @@
     mode: 0600
     force: yes
 
-- name: opensearch/osearch-static-config | Create sysctl.d/opensearch.conf
-  become: yes
-  copy:
-    content: |
-      vm.max_map_count={{ osearch_max_map_count }}
-    dest: "/usr/lib/sysctl.d/opensearch.conf"
-    owner: "{{osearch_user}}"
-    group: "{{osearch_group}}"
-    mode: 0644
-    force: yes
-  notify: restart opensearch
-
 #This needs to be set programmatically, or opensearch will not start.  A reboot will also do it, but not ideal.
 - name: opensearch/osearch-static-config | set vm.max_map_count
   become: yes
@@ -105,3 +93,4 @@
     sysctl_set: yes
     state: present
     reload: yes
+  notify: restart opensearch

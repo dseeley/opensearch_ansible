@@ -6,9 +6,12 @@
   tasks:
     - { name: "Get dependent roles via ansible-galaxy", local_action: "command ansible-galaxy role install -fr requirements.yml", tags: ["always"] }
 
-#    - { include_role: { name: "clusterverse/_dependencies", apply: { tags: ["always"] } }, tags: ["always"], when: "clean is defined" }                       #So that opensearch/clean has the cluster variables defined
-#    - { include_role: { name: "opensearch/clean", apply: { tags: ["clusterverse_clean"] } }, tags: ["clusterverse_clean"], when: "clean is defined" }
-    - { include_role: { name: "clusterverse/clean", apply: { tags: ["clusterverse_clean"]} }, tags: ["clusterverse_clean"], when: "clean is defined" }
+    - block:
+        - { include_role: { name: "clusterverse/_dependencies", apply: {tags: ["always"]} }, tags: ["always"] }
+#        - { include_role: { name: "opensearch/clean", apply: { tags: ["always"]} }, tags: ["always"] }
+        - { include_role: { name: "clusterverse/clean", apply: {tags: ["clusterverse_clean"]} }, tags: ["clusterverse_clean"] }
+      when: "clean is defined"
+
     - { include_role: { name: "clusterverse/create", apply: { tags: ["clusterverse_create"]} }, tags: ["clusterverse_create"] }
     - { include_role: { name: "clusterverse/dynamic_inventory", apply: { tags: ["clusterverse_dynamic_inventory"]} }, tags: ["clusterverse_dynamic_inventory"] }
     - { name: "clusterverse | Copy ansible_ssh_private_key_file", local_action: "copy content={{cluster_vars[buildenv].ssh_connection_cfg.host.ansible_ssh_private_key_file}} dest='id_rsa_ansible_ssh_private_key_file' mode='0600'", when: "cluster_vars[buildenv].ssh_connection_cfg.host.ansible_ssh_private_key_file is defined", no_log: yes, tags: ["always"] }
