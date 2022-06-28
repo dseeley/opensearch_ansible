@@ -2,20 +2,17 @@
 
 redeploy_schemes_supported: ['_scheme_addallnew_rmdisk_rollback']
 
-redeploy_scheme: _scheme_addallnew_rmdisk_rollback
-#redeploy_scheme: _scheme_addnewvm_rmdisk_rollback
-#redeploy_scheme: _scheme_rmvm_rmdisk_only
-#redeploy_scheme: _scheme_rmvm_keepdisk_rollback
-#redeploy_scheme: _noredeploy_scale_in_only
+prometheus_node_exporter_install: no
+filebeat_install: no
+metricbeat_install: no
 
-skip_dynamic_inventory_sshwait: true
-test_touch_disks: true
-debug_nested_log_output: true
+pkgupdate: ''
+reboot_on_package_upgrade: yes
 
 app_name: "opensearch-{{lookup('pipe', 'whoami') | lower}}"      # The name of the application cluster (e.g. 'couchbase', 'nginx'); becomes part of cluster_name.  Provided is a default to ensure no accidental overwriting.
-app_class: "observability"                      # The class of application (e.g. 'database', 'webserver'); becomes part of the fqdn
+app_class: "observability"                              # The class of application (e.g. 'database', 'webserver'); becomes part of the fqdn
 
-cluster_name: "{{app_name}}-{{buildenv}}"       # Identifies the cluster within the cloud environment
+cluster_name: "{{app_name}}-{{buildenv}}"               # Identifies the cluster within the cloud environment
 
 cluster_vars:
   type: "{{cloud_type}}"
@@ -25,5 +22,3 @@ cluster_vars:
     inv_service_id: "{{app_class}}"
     inv_cluster_id: "{{cluster_name}}"
     inv_cluster_type: "{{app_name}}"
-  ssh_whitelist: &ssh_whitelist ['10.0.0.0/8']
-_ssh_whitelist: *ssh_whitelist

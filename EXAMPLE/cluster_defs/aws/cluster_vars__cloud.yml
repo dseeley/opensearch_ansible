@@ -1,19 +1,7 @@
 ---
 
-prometheus_node_exporter_install: false
-filebeat_install: false
-metricbeat_install: false
-
-beats_config:
-  filebeat:
-#    output_logstash_hosts: ["localhost:5044"]        # The destination hosts for filebeat-gathered logs
-#    extra_logs_paths:                                # The array is optional, if you need to add more paths or files to scrape for logs
-#      - /var/log/myapp/*.log
-  metricbeat:
-#    output_logstash_hosts: ["localhost:5044"]        # The destination hosts for metricbeat-gathered metrics
-#    diskio:                                          # Diskio retrieves metrics for all disks partitions by default. When diskio.include_devices is defined, only look for defined partitions
-#      include_devices: ["sda", "sdb", "nvme0n1", "nvme1n1", "nvme2n1"]
-
+# A list of CIDRs from which to allow SSH access
+ssh_whitelist:  ['10.0.0.0/8', '82.69.177.168/29']
 
 cluster_vars:
   dns_cloud_internal_domain: "{{region}}.compute.internal"    # The cloud-internal zone as defined by the cloud provider (e.g. GCP, AWS)
@@ -34,7 +22,7 @@ cluster_vars:
   secgroup_new:
     - proto: "tcp"
       ports: ["22"]
-      cidr_ip: "{{_ssh_whitelist}}"
+      cidr_ip: "{{ssh_whitelist}}"
       rule_desc: "SSH Access"
     - proto: "tcp"
       ports: ["{{dashboards_port | default(5601)}}"]
