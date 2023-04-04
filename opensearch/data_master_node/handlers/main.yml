@@ -25,4 +25,5 @@
         host: localhost
         port: 9200
         timeout: 300
-  throttle: "{{'1' if osearch_link_stat.stat.exists else '0'}}"
+  throttle: "{{ '1' if osearch_link_stat is defined and osearch_link_stat.stat.exists else '0' }}"
+
