@@ -1,10 +1,12 @@
 ---
 
-- name: opensearch | version check
+- name: opensearch | dependency check
   hosts: all:localhost
   tasks:
     - name: Ansible version requirement
-      assert: { that: "ansible_version.full is version('2.14', '<')", fail_msg: "ansible-core versions >= 2.14 (Ansible>6.7.0) are not supported due to https://github.com/ansible/ansible/issues/80374" }
+      assert: { that: "'dseeley.tasks_serial' in galaxy_collections.keys()", fail_msg: "Please ensure the dseeley.tasks_serial collection is installed:  ansible-galaxy collection install dseeley.tasks_serial (or ansible-galaxy collection install --ignore-errors -fr requirements.yml)" }
+      vars:
+        galaxy_collections: "{{lookup('pipe', 'ansible-galaxy collection list --format=json', errors='ignore') | from_json | json_query(\"*\") | combine }}"
 
 - name: clusterverse | Deploy the cluster
   hosts: localhost
@@ -13,9 +15,9 @@
     - { name: "Get dependent roles via ansible-galaxy", local_action: "command ansible-galaxy role install --ignore-errors -fr requirements.yml", tags: ["always"] }
 
     - block:
-        - { include_role: { name: "clusterverse/_dependencies", apply: {tags: ["always"]} }, tags: ["always"] }
-#        - { include_role: { name: "opensearch/clean", apply: { tags: ["always"]} }, tags: ["always"] }
-        - { include_role: { name: "clusterverse/clean", apply: {tags: ["clusterverse_clean"]} }, tags: ["clusterverse_clean"] }
+        #- { include_role: { name: "clusterverse/_dependencies", apply: { tags: ["always"] } }, tags: ["always"] }                       #So that opensearch/clean has the cluster variables defined
+        #- { include_role: { name: "opensearch/clean", apply: { tags: ["always"]} }, tags: ["always"] }
+        - { include_role: { name: "clusterverse/clean", apply: { tags: ["clusterverse_clean"]} }, tags: ["clusterverse_clean"] }
       when: "clean is defined"
 
     - { include_role: { name: "clusterverse/create", apply: { tags: ["clusterverse_create"]} }, tags: ["clusterverse_create"] }
@@ -45,13 +47,7 @@
   tasks:
     - assert: { that: "'dseeley.ansible_vault_pipe' in galaxy_collections.keys()", fail_msg: "Please ensure the dseeley.ansible_vault_pipe collection is installed:  ansible-galaxy collection install dseeley.ansible_vault_pipe (or ansible-galaxy collection install --ignore-errors -fr requirements.yml)" }
       vars:
-        galaxy_collections: |-
-          {% set res = {} -%}
-          {% set _galaxy_lookup = lookup('pipe', 'ansible-galaxy collection list', errors='ignore') -%}     {# Note: We cannot use '--format json' in 'ansible-galaxy collection list' command, as it is not present in 2.10.x  #}
-          {%- for sub in (_galaxy_lookup | ternary(_galaxy_lookup, '') | trim).split('\n') | map('trim') | map('regex_replace', '\\s+', ' ') | select | list -%}
-            {% set _ = res.update({sub.split(' ')[0]: {'version': sub.split(' ')[1]|default('')}}) -%}
-          {%- endfor -%}
-          {{ res }}
+        galaxy_collections: "{{lookup('pipe', 'ansible-galaxy collection list --format=json', errors='ignore') | from_json | json_query(\"*\") | combine }}"
 
     - { include_role: { name: "opensearch/ssl_ownca", apply: { tags: ["opensearch_ssl_ownca"] } }, tags: ["opensearch_ssl_ownca"] }
 

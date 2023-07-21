@@ -16,9 +16,22 @@
     file: osearch-certs.yml
 
 
-- name: flush the handlers, (re)starting opensearch, if necessary
+- name: opensearch/main | flush the handlers
   meta: flush_handlers
 
+- name: opensearch/main | Ensure opensearch is running (e.g. in case an initial run didn't complete or something.  Shouldn't be necessary for 99% of the time.)
+  become: yes
+  block:
+    - name: opensearch/main | Ensure opensearch is running | start & enable opensearch service
+      service:
+        name: opensearch
+        state: started
+        enabled: yes
+    - name: opensearch/main | Ensure opensearch is running | wait for port 9200 to be open
+      wait_for:
+        host: localhost
+        port: 9200
+        timeout: 300
 
 - include_tasks:
     file: osearch-security-accesscontrol.yml
@@ -27,7 +40,7 @@
     file: osearch-security-config.yml
 
 
-- name: opensearch/osearch-templates | Apply templates
+- name: opensearch/main | Apply index templates
   become: yes
   become_user: "{{osearch_user}}"
   uri:

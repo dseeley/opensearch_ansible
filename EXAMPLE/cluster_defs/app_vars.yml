@@ -4,7 +4,7 @@ use_local_artifact: true
 
 playbook_ca_yaml: "{{playbook_dir}}/cluster_defs/ssl_ca.yml"
 
-osearch_version: "2.6.0"      # "1.3.3", "2.0.1"
+osearch_version: "2.8.0"      #"1.3.11"
 osearch_artifact_location: "https://artifacts.opensearch.org/releases/bundle/opensearch/{{osearch_version}}/opensearch-{{osearch_version}}-linux-{{ 'x64' if ansible_architecture == 'x86_64' else 'arm64' if ansible_architecture == 'aarch64' else ansible_architecture }}.tar.gz"
 osearch_user: opensearch
 osearch_group: opensearch
@@ -38,19 +38,19 @@ osearch_ssl_clientauth_mode: "OPTIONAL"      # Whether we require clients to use
 
 osearch_static_users:
   admin:
-    _password: "CHANGEME"
+    _password: "vq@#RqVk3kpLrn"
     reserved: true
     backend_roles: ["admin"]
     attributes: { description: "admin user" }
 
   kibanaserver:
-    _password: "CHANGEME"
+    _password: "vq@#RqVk3kpLrn"
     reserved: true
     attributes: { description: "kibanaserver user" }
 
 osearch_internal_users:
   dougal:
-    password: "CHANGEME"
+    password: "vq@#RqVk3kpLrn"
     opendistro_security_roles: ["all_access"]
     attributes: { "name": "Dougal Seeley" }
 
@@ -108,7 +108,8 @@ osearch_rolesmapping:
 #            exchange_key: PtnpKLyzpgtjrNkLbHWrCo9dTuyRAos6
 #        authentication_backend:
 #          type: noop
-#    authz:
+#    ## LDAP is used to get the backend roles for authorization (Azure SAML does not provide group names from cloud-managed groups, only IDs).
+#    authz:    ## NOTE: LDAP server must be part of the network
 #      ldap_roles:
 #        description: "MS Active Directory LDAP"
 #        http_enabled: true
@@ -178,7 +179,7 @@ osearch_index_templates:
 ########################
 ###### Dashboards ######
 ########################
-dashboards_version: "{{osearch_version}}"      # "1.3.3", "2.0.1"
+dashboards_version: "{{osearch_version}}"     #"2.8.0" or "1.3.11"
 dashboards_artifact_location: "https://artifacts.opensearch.org/releases/bundle/opensearch-dashboards/{{dashboards_version}}/opensearch-dashboards-{{dashboards_version}}-linux-{{ 'x64' if ansible_architecture == 'x86_64' else 'arm64' if ansible_architecture == 'aarch64' else ansible_architecture }}.tar.gz"
 dashboards_user: "{{osearch_user}}"
 dashboards_group: "{{osearch_group}}"
@@ -187,7 +188,7 @@ dashboards_pid_dir: "/var/run/opensearch-dashboards"
 dashboards_log_dir: "/var/log/opensearch-dashboards"
 dashboards_conf_dir: "{{dashboards_home}}/config"
 dashboards_network_host: 0.0.0.0
-dashboards_port: 5601    # 5601 is default
+dashboards_port: 443    # 5601 is default
 dashboards_multitenancy_enabled: true
 
 dashboards_ssl_path: "{{ dashboards_conf_dir }}/certs"

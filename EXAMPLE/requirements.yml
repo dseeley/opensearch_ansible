@@ -12,3 +12,6 @@ roles:
 collections:
   - name: dseeley.ansible_vault_pipe
     source: https://galaxy.ansible.com
+
+  - name: dseeley.tasks_serial
+    source: https://galaxy.ansible.com
