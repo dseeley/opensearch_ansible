@@ -7,9 +7,9 @@
     daemon_reload: yes
   throttle: 1
 
-## Restart opensearch nodes.  If this is not the initial install (the opensearch binary was not present), do each in-turn, ensuring each node is *really* back up (i.e. port 9200 is open) before restarting the next.
+## Restart opensearch-dashboards nodes.  If this is not the initial install (the opensearch binary was not present), do each in-turn, ensuring each node is *really* back up (i.e. port 9200 is open) before restarting the next.
 ## This custom action plugin is a compromise, but there is apparently no alternative; see https://github.com/ansible/ansible/issues/80374
-- name: restart opensearch
+- name: restart opensearch-dashboards
   become: yes
   dseeley.tasks_serial.tasks_serial:
     tasks:

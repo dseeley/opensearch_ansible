@@ -2,6 +2,7 @@
 
 - name: opensearch | dependency check
   hosts: all:localhost
+  gather_facts: no
   tasks:
     - name: Ansible version requirement
       assert: { that: "'dseeley.tasks_serial' in galaxy_collections.keys()", fail_msg: "Please ensure the dseeley.tasks_serial collection is installed:  ansible-galaxy collection install dseeley.tasks_serial (or ansible-galaxy collection install --ignore-errors -fr requirements.yml)" }
