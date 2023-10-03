@@ -33,12 +33,13 @@
 
 - name: clusterverse | Configure the cluster
   hosts: all:!not_target_hosts
+  gather_facts: no
   tasks: [ { include_role: { name: "clusterverse/config", apply: { tags: ["clusterverse_config"]} }, tags: ["clusterverse_config"] } ]
 
 
 ###### opensearch roles
 - name: opensearch | load clusterverse deps if not included already
-  hosts: all:localhost
+  hosts: all
   tasks:
     - { include_role: { name: "clusterverse/_dependencies", apply: { tags: ["always"] } }, tags: ["always"], when: "'clusterverse_config' not in ansible_run_tags" }      # If we --skip-tags=clusterverse_config, this will ensure the variables from /cluster_defs are loaded.
     - { include_role: { name: "clusterverse/cluster_hosts", apply: { tags: ["always"] } }, tags: ["always"], when: "'clusterverse_create' not in ansible_run_tags" }      # If we --skip-tags=clusterverse_create, this will ensure cluster_suffix is defined.

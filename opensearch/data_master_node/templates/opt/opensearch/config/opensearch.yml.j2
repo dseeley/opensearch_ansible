@@ -13,9 +13,9 @@ network.bind_host: {{ osearch_network_bind_host }}
 network.publish_host: _site_
 
 node.roles:
-{%- if 'data' in group_names %}
-  - data
-{%- endif %}
+{% for group_name in group_names if not group_name == 'master' -%}
+  - {{group_name}}
+{%- endfor %}
 {%- if inventory_hostname in (master_eligible_nodes | map(attribute='hostname')) %}
   - master
 {%- endif %}
@@ -63,3 +63,7 @@ plugins.security.nodes_dn:
   - CN={{cluster_name}}-*.{{cluster_vars.dns_user_domain}},DC={{cluster_vars.dns_user_domain}}
 plugins.security.authcz.admin_dn:
   - CN=admin,DC={{cluster_vars.dns_user_domain}}
+
+{%- if osearch_ml_without_ml_nodes -%}
+plugins.ml_commons.only_run_on_ml_node: false
+{%- endif %}

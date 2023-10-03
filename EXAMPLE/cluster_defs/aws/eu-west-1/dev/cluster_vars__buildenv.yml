@@ -42,6 +42,13 @@ cluster_vars:
         version: "{{osearch_version | regex_replace('\\.', '_') | default('')}}"
         vms_by_az: { a: 1, b: 1, c: 1 }
 
+      ml:
+        auto_volumes:
+          - { device_name: "/dev/sda1", mountpoint: "/", fstype: "ext4", volume_type: "gp3", volume_size: 8, encrypted: True, delete_on_termination: true }
+        flavor: t4g.small
+        version: "{{osearch_version | regex_replace('\\.', '_') | default('')}}"
+        vms_by_az: { a: 1, b: 1, c: 1 }
+
       dashboards:
         auto_volumes:
           - { device_name: "/dev/sda1", mountpoint: "/", fstype: "ext4", volume_type: "gp3", volume_size: 8, encrypted: True, delete_on_termination: true }

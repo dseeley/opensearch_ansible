@@ -1,10 +1,9 @@
 ---
 
 # A list of CIDRs from which to allow SSH access
-ssh_whitelist: ['10.0.0.0/8', '82.69.177.168/29']
+ssh_whitelist: ['10.0.0.0/8']
 
 cluster_vars:
-  aws_endpoint_url: https://ec2.{{region}}.amazonaws.com      # Some of the regions are not available for aws module boto.ec2. If the region definitely exists, you may need to upgrade boto or extend with endpoints_path.  Adding this to ec2 invocation fixes the issue
   dns_cloud_internal_domain: "{{region}}.compute.internal"    # The cloud-internal zone as defined by the cloud provider (e.g. GCP, AWS)
   dns_nameserver_zone: &dns_nameserver_zone ""                # The zone that dns_server will operate on.  gcloud dns needs a trailing '.'.  Leave blank if no external DNS (use IPs only)
   dns_user_domain: "{%- if _dns_nameserver_zone -%}{{cloud_type}}-{{region}}.{{app_class}}.{{buildenv}}.{{_dns_nameserver_zone}}{%- endif -%}"         # A user-defined _domain_ part of the FDQN, (if more prefixes are required before the dns_nameserver_zone)
