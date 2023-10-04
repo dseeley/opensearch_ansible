@@ -21,7 +21,8 @@ osearch_extra_config: {
   thread_pool.search.queue_size: 10000,
   cluster.routing.allocation.awareness.attributes: "zone",
   http.cors.enabled: true,
-  http.cors.allow-origin: "*"
+  http.cors.allow-origin: "*",
+  plugins.ml_commons.allow_registering_model_via_url: true
 }
 osearch_network_bind_host: 0.0.0.0
 osearch_plugins:
