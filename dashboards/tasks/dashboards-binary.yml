@@ -29,7 +29,7 @@
               file:
                 path: "{{dashboards_home}}"
                 state: absent
-          when: dashboards_link_stat.stat.exists and dashboards_link_stat.stat.lnk_source == '/opt/opensearch-dashboards-{{dashboards_version}}'
+          when: dashboards_link_stat.stat.exists and dashboards_link_stat.stat.lnk_source == '/opt/opensearch-dashboards-' + dashboards_version
 
         - name: dashboards/osearch-binary | Get dashboards artifact
           become: yes
