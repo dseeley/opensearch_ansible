@@ -1,23 +1,23 @@
 ---
 
 #- name: opensearch/host-config | write out hosts to /etc/hosts when no DNS in use
-#  become: yes
+#  become: true
 #  blockinfile:
 #    dest: "/etc/hosts"
 #    block: "{{ hostvars | json_query(\"*.join(' ', [ansible_default_ipv4.address, ansible_hostname])\") | sort | join('\n') }}"
 #    state: present
-#    create: yes
+#    create: true
 #    marker: "# Ansible inventory hosts {mark}"
 #  when: (cluster_vars.dns_server is not defined  or  cluster_vars.dns_server == '')  or  (cluster_vars.dns_user_domain is not defined  or  cluster_vars.dns_user_domain == "")
 
 - name: opensearch/host-config | swap disabling
   block:
     - name: opensearch/host-config | Disable swap for current session
-      become: yes
+      become: true
       command: swapoff -a
 
     - name: opensearch/host-config | Remove swapfile from /etc/fstab
-      become: yes
+      become: true
       mount:
         name: "{{ item }}"
         fstype: swap
@@ -25,16 +25,16 @@
       with_items: ["swap", "none"]
 
     - name: opensearch/host-config | Set kernel swappiness to 0
-      become: yes
+      become: true
       sysctl:
         name: vm.swappiness
         value: 0
-        sysctl_set: yes
+        sysctl_set: true
         state: present
-        reload: yes
+        reload: true
 
 - name: opensearch/host-config | set unlimited memlock ulimit
-  become: yes
+  become: true
   pam_limits:
     domain: "{{osearch_user}}"
     limit_type: '-'
@@ -44,7 +44,7 @@
   when: osearch_extra_config['bootstrap.memory_lock'] is defined  and  osearch_extra_config['bootstrap.memory_lock'] | bool
 
 - name: opensearch/host-config | set nofile ulimit
-  become: yes
+  become: true
   pam_limits:
     domain: "{{osearch_user}}"
     limit_type: '-'
@@ -54,19 +54,19 @@
   when: osearch_max_open_files is defined
 
 - name: opensearch/host-config | Create opensearch unix group
-  become: yes
+  become: true
   group:
     name: "{{osearch_group}}"
 
 - name: opensearch/host-config | Add the opensearch user
-  become: yes
+  become: true
   user:
     name: "{{osearch_user}}"
     groups: "{{osearch_group}}"
-    system: yes
+    system: true
 
 - name: "opensearch/host-config | Change {{osearch_data_dir}} data directory ownership "
-  become: yes
+  become: true
   file:
     path: "{{osearch_data_dir}}"
     name: "{{osearch_user}}"

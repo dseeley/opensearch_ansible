@@ -15,13 +15,13 @@
       community.crypto.openssl_csr_pipe:
         privatekey_content: "{{r__openssl_privatekey_pipe.privatekey}}"
         basic_constraints: ["CA:TRUE", "pathlen:0"]
-        basic_constraints_critical: yes
+        basic_constraints_critical: true
         key_usage: ["cRLSign", "digitalSignature", "keyCertSign"]
-        key_usage_critical: yes
+        key_usage_critical: true
         extended_key_usage: ["clientAuth", "serverAuth"]
-        extended_key_usage_critical : yes
+        extended_key_usage_critical : true
         subject: { DC: "{{cluster_vars.dns_user_domain}}", CN: "root.ca.{{cluster_vars.dns_user_domain}}", OU: "CA" }
-        use_common_name_for_san: no
+        use_common_name_for_san: false
       register: r__openssl_csr_pipe
 
     - name: ssl_ownca | Generate the self-signed CA certificate
@@ -48,8 +48,8 @@
             ca-key.pem: !vault |
               {{ r__ansible_vault_encrypt_ca_privatekey.vaulttext | trim | indent(4) }}
         dest: "{{ playbook_ca_yaml }}"
-        force: yes
-  run_once: yes
+        force: true
+  run_once: true
   delegate_to: localhost
   when: ssl_ca is not defined
 

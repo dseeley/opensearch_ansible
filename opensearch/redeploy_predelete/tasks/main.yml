@@ -25,22 +25,22 @@
                 url: "https://localhost:9200/_cluster/voting_config_exclusions?node_names={{ voting_config_exclusions_nodes | join(',') }}&timeout=2m"
                 user: "admin"
                 password: "{{osearch_static_users['admin']['_password']}}"
-                force_basic_auth: yes
+                force_basic_auth: true
                 method: POST
                 client_cert: "{{osearch_ssl_crt_path if osearch_ssl_clientauth_mode in ['REQUIRE', 'OPTIONAL'] else omit}}"
                 client_key: "{{osearch_ssl_key_path if osearch_ssl_clientauth_mode in ['REQUIRE', 'OPTIONAL'] else omit}}"
-                validate_certs: no
+                validate_certs: false
 
             - name: opensearch/redeploy_predelete | Verify voting_config_exclusions
               uri:
                 url: "https://localhost:9200/_cluster/state?filter_path=metadata.cluster_coordination.voting_config_exclusions"
                 user: "admin"
                 password: "{{osearch_static_users['admin']['_password']}}"
-                force_basic_auth: yes
+                force_basic_auth: true
                 method: GET
                 client_cert: "{{osearch_ssl_crt_path if osearch_ssl_clientauth_mode in ['REQUIRE', 'OPTIONAL'] else omit}}"
                 client_key: "{{osearch_ssl_key_path if osearch_ssl_clientauth_mode in ['REQUIRE', 'OPTIONAL'] else omit}}"
-                validate_certs: no
+                validate_certs: false
               register: r__uri__voting_config_exclusions
 
             - name: opensearch/redeploy_predelete | r__uri__voting_config_exclusions
@@ -55,25 +55,25 @@
             url: "https://localhost:9200/_cluster/settings"
             user: "admin"
             password: "{{osearch_static_users['admin']['_password']}}"
-            force_basic_auth: yes
+            force_basic_auth: true
             method: PUT
             body_format: json
             body:
               "transient": { "cluster.routing.allocation.exclude._name": "{{hostnames_to_remove | join(',')}}" }
             client_cert: "{{osearch_ssl_crt_path if osearch_ssl_clientauth_mode in ['REQUIRE', 'OPTIONAL'] else omit}}"
             client_key: "{{osearch_ssl_key_path if osearch_ssl_clientauth_mode in ['REQUIRE', 'OPTIONAL'] else omit}}"
-            validate_certs: no
+            validate_certs: false
 
         - name: opensearch/redeploy_predelete | Wait until the shards are off all the hosts_to_remove
           uri:
             url: "https://localhost:9200/_cat/shards?format=json"
             user: "admin"
             password: "{{osearch_static_users['admin']['_password']}}"
-            force_basic_auth: yes
+            force_basic_auth: true
             client_cert: "{{osearch_ssl_crt_path if osearch_ssl_clientauth_mode in ['REQUIRE', 'OPTIONAL'] else omit}}"
             client_key: "{{osearch_ssl_key_path if osearch_ssl_clientauth_mode in ['REQUIRE', 'OPTIONAL'] else omit}}"
             method: GET
-            validate_certs: no
+            validate_certs: false
           register: r__uri__cat_shards
           until: r__uri__cat_shards.json is defined and ((r__uri__cat_shards.json | json_query(jq1)) | length == 0)
           retries: 500
@@ -84,13 +84,13 @@
           include_role:
             name: opensearch/opensearch/test
       run_once: true
-      become: yes
+      become: true
       delegate_to: "{{master_hostnames_to_keep[0]}}"
 
     - block:
         - name: opensearch/redeploy_predelete | Get (network) facts to determine the local IP/network
           setup: { gather_subset: ["network"] }
-          delegate_facts: yes
+          delegate_facts: true
           delegate_to: "{{item}}"
           loop: "{{ data_master_nodes_to_keep }}"
 
@@ -104,21 +104,21 @@
             owner: "{{osearch_user}}"
             group: "{{osearch_group}}"
             mode: 0600
-            force: yes
+            force: true
           delegate_to: "{{item}}"
           loop: "{{ data_master_nodes_to_keep }}"
-      become: yes
+      become: true
       vars:
         data_master_nodes_to_keep: "{{ query('inventory_hostnames', 'data,master', errors='ignore') | difference(hostnames_to_remove) }}"
 
     - name: opensearch/redeploy_predelete | update service_facts
       service_facts:
       delegate_to: "{{item}}"
-      delegate_facts: yes
+      delegate_facts: true
       loop: "{{hostnames_to_remove}}"
 
     - name: opensearch/redeploy_predelete | Stop service
-      become: yes
+      become: true
       service:
         name: opensearch
         state: stopped
@@ -132,11 +132,11 @@
             url: "https://localhost:9200/_cluster/voting_config_exclusions"
             user: "admin"
             password: "{{osearch_static_users['admin']['_password']}}"
-            force_basic_auth: yes
+            force_basic_auth: true
             method: DELETE
             client_cert: "{{osearch_ssl_crt_path if osearch_ssl_clientauth_mode in ['REQUIRE', 'OPTIONAL'] else omit}}"
             client_key: "{{osearch_ssl_key_path if osearch_ssl_clientauth_mode in ['REQUIRE', 'OPTIONAL'] else omit}}"
-            validate_certs: no
+            validate_certs: false
           run_once: true
 
         - name: opensearch/redeploy_predelete | Remove the cluster.routing.allocation.exclude._name
@@ -144,16 +144,16 @@
             url: "https://localhost:9200/_cluster/settings"
             user: "admin"
             password: "{{osearch_static_users['admin']['_password']}}"
-            force_basic_auth: yes
+            force_basic_auth: true
             method: PUT
             body_format: json
             body:
               "transient": { "cluster.routing.allocation.exclude._name": null }
             client_cert: "{{osearch_ssl_crt_path if osearch_ssl_clientauth_mode in ['REQUIRE', 'OPTIONAL'] else omit}}"
             client_key: "{{osearch_ssl_key_path if osearch_ssl_clientauth_mode in ['REQUIRE', 'OPTIONAL'] else omit}}"
-            validate_certs: no
+            validate_certs: false
       run_once: true
-      become: yes
+      become: true
       delegate_to: "{{master_hostnames_to_keep[0]}}"
   vars:
     hostnames_to_remove: "{{hosts_to_remove | map(attribute='name') | list | unique }}"

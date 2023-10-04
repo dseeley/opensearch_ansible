@@ -23,7 +23,7 @@
               service:
                 name: opensearch-dashboards
                 state: stopped
-                enabled: no
+                enabled: false
 
             - name: dashboards/osearch-binary | Remove the dashboards link
               file:
@@ -32,14 +32,14 @@
           when: dashboards_link_stat.stat.exists and dashboards_link_stat.stat.lnk_source == '/opt/opensearch-dashboards-' + dashboards_version
 
         - name: dashboards/osearch-binary | Get dashboards artifact
-          become: yes
+          become: true
           get_url:
             url: "{{dashboards_artifact_location}}"
             dest: "/opt/{{ dashboards_artifact_location|basename }}"
           when: use_local_artifact is not defined  or  use_local_artifact|bool==false
 
         - name: dashboards/osearch-binary | Create the artifact dir if it doesn't exist
-          become: yes
+          become: true
           file:
             state: directory
             path: "{{dashboards_unzip_loc}}"
@@ -48,7 +48,7 @@
             mode: 0755
 
         - name: dashboards/osearch-binary | Extract the dashboards artifact
-          become: yes
+          become: true
           unarchive:
             remote_src: "{{ 'yes' if (use_local_artifact is not defined  or  use_local_artifact|bool==false) else 'no' }}"
             src: "{{ '/opt/' if (use_local_artifact is not defined  or  use_local_artifact|bool==false) else '' }}{{dashboards_artifact_location | basename}}"
@@ -59,7 +59,7 @@
           notify: restart opensearch-dashboards
 
         - name: dashboards/osearch-binary | Create the dashboards link
-          become: yes
+          become: true
           file:
             src: "{{dashboards_unzip_loc}}"
             dest: "{{dashboards_home}}"

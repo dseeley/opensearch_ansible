@@ -6,11 +6,11 @@
 - name: update service_facts
   service_facts:
   delegate_to: "{{item.name}}"
-  delegate_facts: yes
+  delegate_facts: true
   loop: "{{hosts_to_remove}}"
 
 - name: dashboards/redeploy_predelete | Stop service
-  become: yes
+  become: true
   service:
     name: opensearch-dashboards
     state: stopped
@@ -31,7 +31,7 @@
     - name: dashboards/redeploy_predelete | Get (network) facts to determine the local IP/network
       setup: { gather_subset: ["network"] }
       delegate_to: "{{item}}"
-      delegate_facts: yes
+      delegate_facts: true
       loop: "{{ master_eligible_nodes | map(attribute='hostname') }}"
 
     - debug:
@@ -46,7 +46,7 @@
         owner: "{{dashboards_user}}"
         group: "{{dashboards_group}}"
         mode: '0644'
-        force: yes
+        force: true
       delegate_to: "{{item}}"
       loop: "{{ dashboard_nodes_to_keep }}"
 
@@ -59,6 +59,6 @@
 
     - name: dashboards/redeploy_predelete | re-include main opensearch/facts to reset facts (master_eligible_nodes) to default
       include_role: { name: "opensearch/facts" }
-  become: yes
+  become: true
   vars:
     dashboard_nodes_to_keep: "{{ groups['dashboards'] | difference(hosts_to_remove|map(attribute='name')) |list }}"

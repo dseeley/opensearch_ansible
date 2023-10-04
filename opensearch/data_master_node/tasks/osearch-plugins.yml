@@ -2,13 +2,13 @@
 
 #List currently installed plugins
 #- name: opensearch/osearch-plugins | Check installed opensearch plugins
-#  become: yes
+#  become: true
 #  become_user: "{{osearch_user}}"
 #  shell: "{{osearch_home}}/bin/opensearch-plugin list"
 #  register: installed_plugins
 #  failed_when: "'ERROR' in installed_plugins.stdout"
 #  changed_when: False
-#  ignore_errors: yes
+#  ignore_errors: true
 #  environment:
 #    CONF_DIR: "{{ osearch_conf_dir }}"
 #
@@ -17,7 +17,7 @@
 
 
 - name: opensearch/osearch-plugins | Remove custom opensearch plugins (so they are reinstalled below)
-  become: yes
+  become: true
   become_user: "{{osearch_user}}"
   command: "{{osearch_home}}/bin/opensearch-plugin remove {{ item.name }}"
   with_items: "{{ osearch_plugins | default([]) }}"
@@ -34,7 +34,7 @@
 
 
 - name: opensearch/osearch-plugins | Install custom opensearch plugins
-  become: yes
+  become: true
   become_user: "{{osearch_user}}"
   command: "{{osearch_home}}/bin/opensearch-plugin install {{ item.url }} --batch"
   with_items: "{{ osearch_plugins | default([]) }}"
@@ -50,5 +50,5 @@
 
 #Set permissions on plugins directory
 - name: opensearch/osearch-plugins | Set plugin directory permissions
-  become: yes
+  become: true
   file: state=directory path={{ osearch_home }}/plugins owner={{ osearch_user }} group={{ osearch_group }} recurse=yes
