@@ -4,7 +4,7 @@ use_local_artifact: true
 
 playbook_ca_yaml: "{{playbook_dir}}/cluster_defs/ssl_ca.yml"
 
-osearch_version: "2.8.0"      #"1.3.11"
+osearch_version: "2.10.0"      #"1.3.11"
 osearch_artifact_location: "https://artifacts.opensearch.org/releases/bundle/opensearch/{{osearch_version}}/opensearch-{{osearch_version}}-linux-{{ 'x64' if ansible_architecture == 'x86_64' else 'arm64' if ansible_architecture == 'aarch64' else ansible_architecture }}.tar.gz"
 osearch_user: opensearch
 osearch_group: opensearch
@@ -21,12 +21,15 @@ osearch_extra_config: {
   thread_pool.search.queue_size: 10000,
   cluster.routing.allocation.awareness.attributes: "zone",
   http.cors.enabled: true,
-  http.cors.allow-origin: "*"
+  http.cors.allow-origin: "*",
+  plugins.ml_commons.allow_registering_model_via_url: true
 }
 osearch_network_bind_host: 0.0.0.0
 osearch_plugins:
 #  - name: "prometheus-exporter"
-#    url: "https://github.com/aiven/prometheus-exporter-plugin-for-opensearch/releases/download/{{osearch_version}}.0/prometheus-exporter-{{osearch_version}}.0.zip"
+#    url: "https://github.com/Aiven-Open/prometheus-exporter-plugin-for-opensearch/releases/download/{{osearch_version}}.0/prometheus-exporter-{{osearch_version}}.0.zip"
+#  - name: "mapper-size"
+#    url: "mapper-size"
 
 osearch_ssl_path: "{{ osearch_conf_dir }}"
 osearch_ssl_ca_path: "{{osearch_ssl_path}}/ca-crt.pem"
@@ -35,6 +38,8 @@ osearch_ssl_key_path: "{{osearch_ssl_path}}/opensearch-key.pem"
 osearch_admin_certificate: "{{osearch_ssl_path}}/admin-crt.pem"
 osearch_admin_key: "{{osearch_ssl_path}}/admin-key.pem"
 osearch_ssl_clientauth_mode: "OPTIONAL"      # Whether we require clients to user certificates to authenticate.  "REQUIRE", "OPTIONAL" or "NONE"
+
+osearch_ml_without_ml_nodes: true     # https://opensearch.org/docs/2.10/ml-commons-plugin/cluster-settings/#run-tasks-and-models-on-ml-nodes-only
 
 osearch_static_users:
   admin:
@@ -179,7 +184,7 @@ osearch_index_templates:
 ########################
 ###### Dashboards ######
 ########################
-dashboards_version: "{{osearch_version}}"     #"2.8.0" or "1.3.11"
+dashboards_version: "{{osearch_version}}"     #"2.10.0" or "1.3.11"
 dashboards_artifact_location: "https://artifacts.opensearch.org/releases/bundle/opensearch-dashboards/{{dashboards_version}}/opensearch-dashboards-{{dashboards_version}}-linux-{{ 'x64' if ansible_architecture == 'x86_64' else 'arm64' if ansible_architecture == 'aarch64' else ansible_architecture }}.tar.gz"
 dashboards_user: "{{osearch_user}}"
 dashboards_group: "{{osearch_group}}"
@@ -190,6 +195,7 @@ dashboards_conf_dir: "{{dashboards_home}}/config"
 dashboards_network_host: 0.0.0.0
 dashboards_port: 443    # 5601 is default
 dashboards_multitenancy_enabled: true
+dashboards_extra_config: {}
 
 dashboards_ssl_path: "{{ dashboards_conf_dir }}/certs"
 dashboards_ssl_is_self_signed: true

@@ -1,14 +1,14 @@
 ---
 
 - name: dashboards/host-config | Create dashboards unix group
-  become: yes
+  become: true
   group:
     name: "{{dashboards_group}}"
 
 - name: dashboards/host-config | Add the dashboards user
-  become: yes
+  become: true
   user:
     name: "{{dashboards_user}}"
     groups: "{{dashboards_group}}"
-    system: yes
+    system: true
 

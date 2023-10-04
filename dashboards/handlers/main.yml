@@ -2,22 +2,22 @@
 
 # Need to do this when we manually add systemd service files to the filesystem
 - name: reload systemd configuration
-  become: yes
+  become: true
   systemd:
-    daemon_reload: yes
+    daemon_reload: true
   throttle: 1
 
 ## Restart opensearch-dashboards nodes.  If this is not the initial install (the opensearch binary was not present), do each in-turn, ensuring each node is *really* back up (i.e. port 9200 is open) before restarting the next.
 ## This custom action plugin is a compromise, but there is apparently no alternative; see https://github.com/ansible/ansible/issues/80374
 - name: restart opensearch-dashboards
-  become: yes
+  become: true
   dseeley.tasks_serial.tasks_serial:
     tasks:
       - name: service
         args:
           name: opensearch-dashboards
           state: restarted
-          enabled: yes
+          enabled: true
       - name: wait_for
         args:
           host: localhost

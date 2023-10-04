@@ -2,7 +2,7 @@
 
 - name: opensearch | dependency check
   hosts: all:localhost
-  gather_facts: no
+  gather_facts: false
   tasks:
     - name: Ansible version requirement
       assert: { that: "'dseeley.tasks_serial' in galaxy_collections.keys()", fail_msg: "Please ensure the dseeley.tasks_serial collection is installed:  ansible-galaxy collection install dseeley.tasks_serial (or ansible-galaxy collection install --ignore-errors -fr requirements.yml)" }
@@ -11,7 +11,7 @@
 
 - name: clusterverse | Deploy the cluster
   hosts: localhost
-  gather_facts: no
+  gather_facts: false
   tasks:
     - { name: "Get dependent roles via ansible-galaxy", local_action: "command ansible-galaxy role install --ignore-errors -fr requirements.yml", tags: ["always"] }
 
@@ -23,22 +23,23 @@
 
     - { include_role: { name: "clusterverse/create", apply: { tags: ["clusterverse_create"]} }, tags: ["clusterverse_create"] }
     - { include_role: { name: "clusterverse/dynamic_inventory", apply: { tags: ["clusterverse_dynamic_inventory"]} }, tags: ["clusterverse_dynamic_inventory"] }
-    - { name: "clusterverse | Copy ansible_ssh_private_key_file", local_action: "copy content={{cluster_vars[buildenv].ssh_connection_cfg.host.ansible_ssh_private_key_file}} dest='id_rsa_ansible_ssh_private_key_file' mode='0600'", when: "cluster_vars[buildenv].ssh_connection_cfg.host.ansible_ssh_private_key_file is defined", no_log: yes, tags: ["always"] }
-    - { name: "clusterverse | Copy bastion sshkey", local_action: "copy content={{cluster_vars[buildenv].ssh_connection_cfg.bastion.ssh_priv_key}} dest='id_rsa_bastion' mode='0600'", when: "cluster_vars[buildenv].ssh_connection_cfg.bastion.ssh_priv_key is defined", no_log: yes, tags: ["always"] }
+    - { name: "clusterverse | Copy ansible_ssh_private_key_file", local_action: "copy content={{cluster_vars[buildenv].ssh_connection_cfg.host.ansible_ssh_private_key_file}} dest='id_rsa_ansible_ssh_private_key_file' mode='0600'", when: "cluster_vars[buildenv].ssh_connection_cfg.host.ansible_ssh_private_key_file is defined", no_log: true, tags: ["always"] }
+    - { name: "clusterverse | Copy bastion sshkey", local_action: "copy content={{cluster_vars[buildenv].ssh_connection_cfg.bastion.ssh_priv_key}} dest='id_rsa_bastion' mode='0600'", when: "cluster_vars[buildenv].ssh_connection_cfg.bastion.ssh_priv_key is defined", no_log: true, tags: ["always"] }
 
 - name: clusterverse | Wait for SSH connections
   hosts: all
-  gather_facts: no
+  gather_facts: false
   tasks: [ {wait_for_connection: "", tags: ["always"] } ]
 
 - name: clusterverse | Configure the cluster
   hosts: all:!not_target_hosts
+  gather_facts: false
   tasks: [ { include_role: { name: "clusterverse/config", apply: { tags: ["clusterverse_config"]} }, tags: ["clusterverse_config"] } ]
 
 
 ###### opensearch roles
 - name: opensearch | load clusterverse deps if not included already
-  hosts: all:localhost
+  hosts: all
   tasks:
     - { include_role: { name: "clusterverse/_dependencies", apply: { tags: ["always"] } }, tags: ["always"], when: "'clusterverse_config' not in ansible_run_tags" }      # If we --skip-tags=clusterverse_config, this will ensure the variables from /cluster_defs are loaded.
     - { include_role: { name: "clusterverse/cluster_hosts", apply: { tags: ["always"] } }, tags: ["always"], when: "'clusterverse_create' not in ansible_run_tags" }      # If we --skip-tags=clusterverse_create, this will ensure cluster_suffix is defined.

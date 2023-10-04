@@ -2,12 +2,12 @@
 
 redeploy_schemes_supported: ['_scheme_addallnew_rmdisk_rollback']
 
-prometheus_node_exporter_install: no
-filebeat_install: no
-metricbeat_install: no
+prometheus_node_exporter_install: false
+filebeat_install: false
+metricbeat_install: false
 
 pkgupdate: ''
-reboot_on_package_upgrade: yes
+reboot_on_package_upgrade: true
 
 app_name: "opensearch-{{lookup('pipe', 'whoami') | lower}}"      # The name of the application cluster (e.g. 'couchbase', 'nginx'); becomes part of cluster_name.  Provided is a default to ensure no accidental overwriting.
 app_class: "observability"                              # The class of application (e.g. 'database', 'webserver'); becomes part of the fqdn

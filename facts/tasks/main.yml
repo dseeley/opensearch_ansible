@@ -12,4 +12,4 @@
 
 - name: master_eligible_nodes
   debug: msg={{master_eligible_nodes}}
-  run_once: yes
+  run_once: true

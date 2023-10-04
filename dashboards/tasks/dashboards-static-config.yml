@@ -1,7 +1,7 @@
 ---
 
 - name: dashboards/osearch-static-config | Create pid, log and conf directories
-  become: yes
+  become: true
   file:
     path: "{{ item }}"
     state: directory
@@ -14,29 +14,29 @@
     - "{{dashboards_conf_dir}}"
 
 - name: dashboards/osearch-static-config | Copy Systemd File
-  become: yes
+  become: true
   template:
     src: etc/systemd/system/opensearch-dashboards.service.j2
     dest: /etc/systemd/system/opensearch-dashboards.service
     mode: 0644
-    force: yes
+    force: true
   notify:
     - reload systemd configuration
     - restart opensearch-dashboards
 
 - name: dashboards/osearch-static-config | Copy main dashboards config file
-  become: yes
+  become: true
   template:
     src: opt/opensearch-dashboards/config/opensearch_dashboards.yml.j2
     dest: "{{dashboards_conf_dir}}/opensearch_dashboards.yml"
     owner: "{{dashboards_user}}"
     group: "{{dashboards_group}}"
     mode: '0644'
-    force: yes
+    force: true
   notify: restart opensearch-dashboards
 
 - name: dashboards/osearch-static-config | Copy tmpfiles.d
-  become: yes
+  become: true
   copy:
     content: |
       d    {{ dashboards_pid_dir }}   0755 {{ dashboards_user }} {{ dashboards_group }} - -
@@ -44,5 +44,5 @@
     owner: "{{dashboards_user}}"
     group: "{{dashboards_group}}"
     mode: 0644
-    force: yes
+    force: true
   notify: restart opensearch-dashboards

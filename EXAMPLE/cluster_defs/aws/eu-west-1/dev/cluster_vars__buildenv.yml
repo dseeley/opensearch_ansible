@@ -37,8 +37,16 @@ cluster_vars:
       data:
         auto_volumes:
           - { device_name: "/dev/sda1", mountpoint: "/", fstype: "ext4", volume_type: "gp3", volume_size: 8, encrypted: True, delete_on_termination: true }
-          - { device_name: "/dev/sdf", mountpoint: "{{osearch_data_dir}}", fstype: "ext4", volume_type: "gp3", volume_size: 5, encrypted: True, delete_on_termination: true }
+          - { device_name: "/dev/sdf", mountpoint: "{{osearch_data_dir}}", fstype: "ext4", volume_type: "gp3", volume_size: 8, encrypted: True, delete_on_termination: true }
         flavor: t4g.medium
+        version: "{{osearch_version | regex_replace('\\.', '_') | default('')}}"
+        vms_by_az: { a: 1, b: 1, c: 1 }
+
+      ml:
+        auto_volumes:
+          - { device_name: "/dev/sda1", mountpoint: "/", fstype: "ext4", volume_type: "gp3", volume_size: 8, encrypted: True, delete_on_termination: true }
+          - { device_name: "/dev/sdf", mountpoint: "{{osearch_data_dir}}", fstype: "ext4", volume_type: "gp3", volume_size: 8, encrypted: True, delete_on_termination: true }
+        flavor: t4g.large
         version: "{{osearch_version | regex_replace('\\.', '_') | default('')}}"
         vms_by_az: { a: 1, b: 1, c: 1 }
 

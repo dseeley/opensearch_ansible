@@ -1,7 +1,7 @@
 ---
 
 - name: opensearch/osearch-static-config | Create pid, log and conf directories
-  become: yes
+  become: true
   file:
     path: "{{ item }}"
     state: directory
@@ -15,7 +15,7 @@
 
 #Create data directory if mountpoint doesn't exist already
 - name: opensearch/osearch-static-config | Create data dir if it doesn't exist
-  become: yes
+  become: true
   file:
     path: "{{osearch_data_dir}}"
     state: directory
@@ -25,42 +25,42 @@
   notify: restart opensearch
 
 - name: opensearch/osearch-static-config | Create systemd file
-  become: yes
+  become: true
   template:
     src: etc/systemd/system/opensearch.service.j2
     dest: /etc/systemd/system/opensearch.service
     mode: 0644
-    force: yes
+    force: true
   notify:
   - reload systemd configuration
   - restart opensearch
 
 - name: opensearch/osearch-static-config | Create jvm.options file
-  become: yes
+  become: true
   template:
     src: opt/opensearch/config/jvm.options.j2
     dest: "{{osearch_conf_dir}}/jvm.options"
     owner: "{{osearch_user}}"
     group: "{{osearch_group}}"
     mode: 0600
-    force: yes
+    force: true
   notify: restart opensearch
   vars:
     osearch_heap_size: "{{ (ansible_memtotal_mb / 2) | round | int | abs }}m"
 
 - name: opensearch/osearch-static-config | Create main opensearch config file
-  become: yes
+  become: true
   template:
     src: opt/opensearch/config/opensearch.yml.j2
     dest: "{{osearch_conf_dir}}/opensearch.yml"
     owner: "{{osearch_user}}"
     group: "{{osearch_group}}"
     mode: '0600'
-    force: yes
+    force: true
   notify: restart opensearch
 
 - name: opensearch/osearch-static-config | Create tmpfiles.d
-  become: yes
+  become: true
   copy:
     content: |
       d    {{ osearch_pid_dir }}   0755 {{ osearch_user }} {{ osearch_group }} - -
@@ -68,11 +68,11 @@
     owner: "{{osearch_user}}"
     group: "{{osearch_group}}"
     mode: 0644
-    force: yes
+    force: true
   notify: restart opensearch
 
 - name: opensearch/osearch-static-config | Create unicast_hosts.txt (don't notify restart)
-  become: yes
+  become: true
   copy:
     content: |
       {% for node in master_eligible_nodes %}
@@ -82,15 +82,15 @@
     owner: "{{osearch_user}}"
     group: "{{osearch_group}}"
     mode: 0600
-    force: yes
+    force: true
 
 #This needs to be set programmatically, or opensearch will not start.  A reboot will also do it, but not ideal.
 - name: opensearch/osearch-static-config | set vm.max_map_count
-  become: yes
+  become: true
   sysctl:
     name: vm.max_map_count
     value: "{{osearch_max_map_count}}"
-    sysctl_set: yes
+    sysctl_set: true
     state: present
-    reload: yes
+    reload: true
   notify: restart opensearch

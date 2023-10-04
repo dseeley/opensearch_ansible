@@ -1,7 +1,7 @@
 ---
 
 - name: opensearch/osearch-security-config | Apply securityconfig (if defined)
-  become: yes
+  become: true
   become_user: "{{osearch_user}}"
   uri:
     url: "https://localhost:9200/_plugins/_security/api/securityconfig/config"
@@ -9,30 +9,30 @@
     status_code: 200
     user: "admin"
     password: "{{osearch_static_users['admin']['_password']}}"
-    force_basic_auth: yes
+    force_basic_auth: true
     body_format: json
     body: "{{ osearch_security_config }}"
     client_cert: "{{osearch_ssl_crt_path if osearch_ssl_clientauth_mode in ['REQUIRE', 'OPTIONAL'] else omit}}"
     client_key: "{{osearch_ssl_key_path if osearch_ssl_clientauth_mode in ['REQUIRE', 'OPTIONAL'] else omit}}"
-    validate_certs: no
-  run_once: yes
+    validate_certs: false
+  run_once: true
   when: osearch_security_config is defined
 
 - name: opensearch/osearch-security-config | Read securityconfig
-  become: yes
+  become: true
   become_user: "{{osearch_user}}"
   uri:
     url: "https://localhost:9200/_plugins/_security/api/securityconfig"
     user: "admin"
     password: "{{osearch_static_users['admin']['_password']}}"
-    force_basic_auth: yes
+    force_basic_auth: true
     method: GET
     client_cert: "{{osearch_ssl_crt_path if osearch_ssl_clientauth_mode in ['REQUIRE', 'OPTIONAL'] else omit}}"
     client_key: "{{osearch_ssl_key_path if osearch_ssl_clientauth_mode in ['REQUIRE', 'OPTIONAL'] else omit}}"
-    validate_certs: no
+    validate_certs: false
   register: r__uri__securityconfig
-  run_once: yes
+  run_once: true
 
 - name: opensearch/osearch-security-config | r__uri__securityconfig
   debug: msg="{{ r__uri__securityconfig }}"
-  run_once: yes
+  run_once: true

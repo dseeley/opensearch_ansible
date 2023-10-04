@@ -20,13 +20,13 @@
   meta: flush_handlers
 
 - name: opensearch/main | Ensure opensearch is running (e.g. in case an initial run didn't complete or something.  Shouldn't be necessary for 99% of the time.)
-  become: yes
+  become: true
   block:
     - name: opensearch/main | Ensure opensearch is running | start & enable opensearch service
       service:
         name: opensearch
         state: started
-        enabled: yes
+        enabled: true
     - name: opensearch/main | Ensure opensearch is running | wait for port 9200 to be open
       wait_for:
         host: localhost
@@ -41,7 +41,7 @@
 
 
 - name: opensearch/main | Apply index templates
-  become: yes
+  become: true
   become_user: "{{osearch_user}}"
   uri:
     url: "https://localhost:9200/_index_template/{{item['name']}}"
@@ -49,12 +49,12 @@
     status_code: 200
     user: "admin"
     password: "{{osearch_static_users['admin']['_password']}}"
-    force_basic_auth: yes
+    force_basic_auth: true
     body_format: json
     body: "{{ item['content'] }}"
     client_cert: "{{osearch_ssl_crt_path if osearch_ssl_clientauth_mode in ['REQUIRE', 'OPTIONAL'] else omit}}"
     client_key: "{{osearch_ssl_key_path if osearch_ssl_clientauth_mode in ['REQUIRE', 'OPTIONAL'] else omit}}"
-    validate_certs: no
+    validate_certs: false
   with_items: "{{ osearch_index_templates }}"
-  run_once: yes
+  run_once: true
   when: osearch_index_templates is defined
