@@ -2,11 +2,7 @@
 
 redeploy_schemes_supported: ['_scheme_addallnew_rmdisk_rollback']
 
-prometheus_node_exporter_install: false
-filebeat_install: false
-metricbeat_install: false
-
-pkgupdate: ''
+pkgupdate: on_create
 reboot_on_package_upgrade: true
 
 app_name: "opensearch-{{lookup('pipe', 'whoami') | lower}}"      # The name of the application cluster (e.g. 'couchbase', 'nginx'); becomes part of cluster_name.  Provided is a default to ensure no accidental overwriting.
@@ -15,10 +11,6 @@ app_class: "observability"                              # The class of applicati
 cluster_name: "{{app_name}}-{{buildenv}}"               # Identifies the cluster within the cloud environment
 
 cluster_vars:
-  type: "{{cloud_type}}"
-  region: "{{region}}"
   custom_tagslabels:
-    inv_environment_id: "{{buildenv}}"
-    inv_service_id: "{{app_class}}"
-    inv_cluster_id: "{{cluster_name}}"
-    inv_cluster_type: "{{app_name}}"
+    cv__environment: "{{buildenv}}"
+    cv__owner: "{{ lookup('env','USER') | lower }}"

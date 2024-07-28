@@ -11,8 +11,6 @@ cluster_vars:
   assign_public_ip: "static"                                  # Whether a 'dynamic' (will change on stop/start), 'static' (e.g. elastic IP), or no public IP should be assigned.
   inventory_ip: "private"                                     # 'public' or 'private', (private in case we're operating in a private LAN).  If public, 'assign_public_ip' must be 'yes'
   instance_profile_name: ""
-  custom_tagslabels:
-    inv_cost_centre: "0000000000"
   user_data: |-
     #cloud-config
     system_info:
