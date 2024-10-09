@@ -53,8 +53,8 @@
 
     - { include_role: { name: "opensearch/ssl_ownca", apply: { tags: ["opensearch_ssl_ownca"] } }, tags: ["opensearch_ssl_ownca"] }
 
-- name: opensearch | opensearch
-  hosts: data:master
+- name: opensearch | opensearch nodes
+  hosts: all:!dashboards
   tasks:
     - { include_role: { name: "opensearch/opensearch/data_master_node", apply: { tags: ["opensearch_opensearch"]} }, tags: ["opensearch_opensearch"] }
 

@@ -11,9 +11,12 @@ network.bind_host: {{ osearch_network_bind_host }}
 network.publish_host: _site_
 
 node.roles:
-{%- for group_name in group_names if group_name in ['data', 'ml', 'ingest', 'remote_cluster_client'] %}
+{%- for group_name in group_names if group_name in ['data', 'ingest', 'remote_cluster_client'] %}
   - {{group_name}}
 {%- endfor -%}
+{%- if 'ml' in group_names and inventory_hostname in groups['ml'] or ('plugins.ml_commons.only_run_on_ml_node' in osearch_extra_config and not osearch_extra_config['plugins.ml_commons.only_run_on_ml_node']) %}
+  - ml
+{%- endif %}
 {%- if inventory_hostname in (master_eligible_nodes | map(attribute='hostname')) %}
   - master
 {%- endif %}
@@ -62,6 +65,3 @@ plugins.security.nodes_dn:
 plugins.security.authcz.admin_dn:
   - CN=admin,DC={{cluster_vars.dns_user_domain}}
 
-{% if osearch_ml_without_ml_nodes %}
-plugins.ml_commons.only_run_on_ml_node: false
-{%- endif %}

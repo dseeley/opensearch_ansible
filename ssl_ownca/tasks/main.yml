@@ -20,7 +20,13 @@
         key_usage_critical: true
         extended_key_usage: ["clientAuth", "serverAuth"]
         extended_key_usage_critical : true
-        subject: { DC: "{{cluster_vars.dns_user_domain}}", CN: "root.ca.{{cluster_vars.dns_user_domain}}", OU: "CA" }
+        subject: |
+          {%- set subj = {"OU": "CA"} -%}
+          {%- if 'dns_user_domain' in cluster_vars and cluster_vars.dns_user_domain!="" -%}
+            {%- set _ = subj.update({"DC": cluster_vars.dns_user_domain }) -%}
+            {%- set _ = subj.update({"CN": "root.ca."+cluster_vars.dns_user_domain }) -%}
+          {%- endif -%}
+          {{subj}}
         use_common_name_for_san: false
       register: r__openssl_csr_pipe
 

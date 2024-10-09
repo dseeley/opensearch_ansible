@@ -4,7 +4,7 @@ use_local_artifact: true
 
 playbook_ca_yaml: "{{playbook_dir}}/cluster_defs/ssl_ca.yml"
 
-osearch_version: "2.15.0"      #"1.3.18"
+osearch_version: "2.17.1"
 osearch_artifact_location: "https://artifacts.opensearch.org/releases/bundle/opensearch/{{osearch_version}}/opensearch-{{osearch_version}}-linux-{{ 'x64' if ansible_architecture == 'x86_64' else 'arm64' if ansible_architecture == 'aarch64' else ansible_architecture }}.tar.gz"
 osearch_user: opensearch
 osearch_group: opensearch
@@ -22,7 +22,8 @@ osearch_extra_config: {
   cluster.routing.allocation.awareness.attributes: "zone",
   http.cors.enabled: true,
   http.cors.allow-origin: "*",
-  plugins.ml_commons.allow_registering_model_via_url: true
+  plugins.ml_commons.allow_registering_model_via_url: true,
+  plugins.ml_commons.only_run_on_ml_node: false      # https://opensearch.org/docs/latest/ml-commons-plugin/cluster-settings/#run-tasks-and-models-on-ml-nodes-only
 }
 osearch_network_bind_host: 0.0.0.0
 osearch_plugins:
@@ -38,8 +39,6 @@ osearch_ssl_key_path: "{{osearch_ssl_path}}/opensearch-key.pem"
 osearch_admin_certificate: "{{osearch_ssl_path}}/admin-crt.pem"
 osearch_admin_key: "{{osearch_ssl_path}}/admin-key.pem"
 osearch_ssl_clientauth_mode: "OPTIONAL"      # Whether we require clients to user certificates to authenticate.  "REQUIRE", "OPTIONAL" or "NONE"
-
-osearch_ml_without_ml_nodes: true     # https://opensearch.org/docs/2.10/ml-commons-plugin/cluster-settings/#run-tasks-and-models-on-ml-nodes-only
 
 osearch_static_users:
   admin:
